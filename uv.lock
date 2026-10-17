@@ -220,8 +220,6 @@ wheels = [
 ]
 
 [[package]]
-<<<<<<< Updated upstream
-=======
 name = "cloudpickle"
 version = "3.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -231,7 +229,6 @@ wheels = [
 ]
 
 [[package]]
->>>>>>> Stashed changes
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -307,10 +304,7 @@ dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "pandas" },
-<<<<<<< Updated upstream
-=======
     { name = "scikit-learn" },
->>>>>>> Stashed changes
 ]
 
 [package.metadata]
@@ -319,10 +313,7 @@ requires-dist = [
     { name = "matplotlib", specifier = ">=3.9,<4" },
     { name = "numpy", specifier = ">=2.0,<3" },
     { name = "pandas", specifier = ">=2.2,<3" },
-<<<<<<< Updated upstream
-=======
     { name = "scikit-learn", specifier = ">=1.5,<2" },
->>>>>>> Stashed changes
 ]
 
 [[package]]
@@ -534,8 +525,6 @@ wheels = [
 ]
 
 [[package]]
-<<<<<<< Updated upstream
-=======
 name = "joblib"
 version = "1.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -548,7 +537,6 @@ wheels = [
 ]
 
 [[package]]
->>>>>>> Stashed changes
 name = "json5"
 version = "0.17.3"
 source = { registry = "https://pypi.org/simple" }
@@ -931,8 +919,6 @@ wheels = [
 ]
 
 [[package]]
-<<<<<<< Updated upstream
-=======
 name = "narwhals"
 version = "2.27.1"
 source = { registry = "https://pypi.org/simple" }
@@ -942,7 +928,6 @@ wheels = [
 ]
 
 [[package]]
->>>>>>> Stashed changes
 name = "nbclient"
 version = "0.11.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1436,8 +1421,6 @@ wheels = [
 ]
 
 [[package]]
-<<<<<<< Updated upstream
-=======
 name = "scikit-learn"
 version = "1.9.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1480,7 +1463,6 @@ wheels = [
 ]
 
 [[package]]
->>>>>>> Stashed changes
 name = "send2trash"
 version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1551,8 +1533,6 @@ wheels = [
 ]
 
 [[package]]
-<<<<<<< Updated upstream
-=======
 name = "threadpoolctl"
 version = "3.7.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1562,7 +1542,6 @@ wheels = [
 ]
 
 [[package]]
->>>>>>> Stashed changes
 name = "tinycss2"
 version = "1.5.1"
 source = { registry = "https://pypi.org/simple" }

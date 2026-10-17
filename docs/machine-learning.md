@@ -4,11 +4,7 @@
 
 ## Estado y objetivo
 
-<<<<<<< Updated upstream
-El pipeline descrito aquí está **planificado y aún no implementado**. El [EDA ya fue completado](eda-results.md), pero no se ha entrenado ningún modelo; por tanto, no existen métricas predictivas, curvas, hiperparámetros definitivos ni conclusiones de rendimiento.
-=======
 El [EDA](eda-results.md) y el preprocesamiento reproducible de datos ya están implementados como notebooks independientes. El EDA solo diagnostica el CSV; [`02_preprocesamiento.ipynb`](../notebooks/02_preprocesamiento.ipynb) vuelve a cargarlo, limpia una copia, crea las particiones y transforma las nueve características sin fuga de información. Todavía no se ha entrenado ningún modelo; por tanto, no existen métricas predictivas, curvas, hiperparámetros definitivos ni conclusiones de rendimiento.
->>>>>>> Stashed changes
 
 El objetivo es aprender, mediante clasificación supervisada, una función que estime:
 
@@ -24,28 +20,19 @@ Las nueve características autorizadas son:
 
 | Tipo | Características |
 |---|---|
-<<<<<<< Updated upstream
-| Numéricas | `CreditScore`, `Age`, `Tenure`, `Balance`, `NumOfProducts`, `HasCrCard`, `IsActiveMember`, `EstimatedSalary` |
-| Categórica | `Geography` |
-=======
 | Numéricas para escalado | `CreditScore`, `Age`, `Tenure`, `Balance`, `NumOfProducts`, `EstimatedSalary` |
 | Categórica nominal | `Geography` |
 | Binarias en passthrough | `HasCrCard`, `IsActiveMember` |
->>>>>>> Stashed changes
 
-`HasCrCard` e `IsActiveMember` son indicadores binarios y deberán validarse como `0` o `1`. `CustomerId`, `Surname`, `Gender`, todas las columnas `_Sim` y `Exited` quedan fuera de la matriz predictora. Véase el [diccionario del dataset](dataset.md).
+`HasCrCard` e `IsActiveMember` son indicadores binarios y se validan como `0` o `1`. `CustomerId`, `Surname`, `Gender`, todas las columnas `_Sim` y `Exited` quedan fuera de la matriz predictora. Véase el [diccionario del dataset](dataset.md).
 
 ## Proceso experimental
 
 ```mermaid
 flowchart TD
     A[CSV validado] --> B[EDA y controles de calidad]
-<<<<<<< Updated upstream
-    B --> C[Separación estratificada]
-=======
     B --> L[Limpieza en una copia dentro del notebook 2]
     L --> C[Separación estratificada]
->>>>>>> Stashed changes
     C --> D[Conjunto de entrenamiento]
     C --> V[Conjunto de validación]
     C --> T[Conjunto de prueba aislado]
@@ -61,9 +48,9 @@ flowchart TD
     X --> O[Inferencia en Streamlit]
 ```
 
-## Análisis exploratorio requerido
+## Análisis exploratorio implementado
 
-Antes del entrenamiento se deberá generar un análisis reproducible que cubra:
+El análisis reproducible ejecutado antes del entrenamiento cubre:
 
 - dimensiones, esquema y tipos inferidos;
 - estadística descriptiva adecuada a cada tipo;
@@ -74,13 +61,6 @@ Antes del entrenamiento se deberá generar un análisis reproducible que cubra:
 - asociaciones entre características, redundancias y posibles proxies;
 - visualizaciones con títulos, unidades y población claramente identificados.
 
-<<<<<<< Updated upstream
-El EDA versionado confirmó 10.000 filas, ninguna celda vacía y una tasa histórica de abandono de 20,37 %. Son resultados descriptivos del dataset, no resultados del modelo.
-
-## División de conjuntos
-
-La separación deberá ser estratificada por `Exited` y producir conjuntos independientes de entrenamiento, validación y prueba. Las proporciones y la semilla todavía no están definidas; se fijarán en el código y se registrarán en la documentación del experimento.
-=======
 El EDA versionado confirmó 10.000 filas, ninguna celda vacía, 92 apellidos con `?` y una tasa histórica de abandono de 20,37 %. Solo informa estos resultados; no modifica los apellidos ni crea un DataFrame depurado.
 
 ## Limpieza previa al preprocesamiento
@@ -106,7 +86,6 @@ La separación se realiza en dos etapas con `train_test_split`, `stratify` y `ra
 | Prueba | 1.500 | 15 % | 305 | 20,33 % |
 
 Las intersecciones entre los índices de los tres conjuntos son vacías y sus tamaños suman los 10.000 registros originales.
->>>>>>> Stashed changes
 
 Reglas contra fuga de información:
 
@@ -119,19 +98,6 @@ Reglas contra fuga de información:
 
 Si en el futuro se incorporan observaciones temporales o múltiples filas por cliente, la estrategia de partición deberá cambiar para impedir solapamiento o anticipación temporal.
 
-<<<<<<< Updated upstream
-## Pipeline de preprocesamiento
-
-El pipeline de Scikit-learn deberá preservar nombres y orden de características:
-
-- **Validación:** comprobar columnas requeridas, tipos, valores finitos y dominios binarios.
-- **Imputación:** solo si el análisis identifica faltantes o se desea robustez ante entradas futuras; la estrategia se ajustará con entrenamiento.
-- **Numéricas:** aplicar `StandardScaler` o `MinMaxScaler`. La elección se justificará experimentalmente y quedará serializada.
-- **Categórica:** aplicar `OneHotEncoder` a `Geography`, con una política explícita para categorías desconocidas.
-- **Composición:** utilizar un transformador por columnas o pipeline equivalente para impedir diferencias entre entrenamiento e inferencia.
-
-El objeto completo, ya ajustado, se exportará a `models/preprocesador.joblib`. Streamlit no reconstruirá transformaciones manualmente.
-=======
 ## Pipeline de preprocesamiento implementado
 
 El `ColumnTransformer` implementado preserva nombres y orden de características:
@@ -153,7 +119,6 @@ El preprocesador solo recibe `fit_transform` sobre `X_train`; validación y prue
 Las 11 columnas finales corresponden a seis numéricas estandarizadas, tres indicadores geográficos y dos variables binarias. No contienen valores `NaN` ni infinitos y son compatibles con la futura entrada de Keras.
 
 La exportación a `models/preprocesador.joblib` sigue pendiente. Se realizará junto con el entrenamiento para guardar exactamente el transformador utilizado por el modelo aprobado; Streamlit no reconstruirá las transformaciones manualmente.
->>>>>>> Stashed changes
 
 ## Arquitectura inicial del MLP
 

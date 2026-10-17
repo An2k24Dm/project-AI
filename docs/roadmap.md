@@ -9,11 +9,7 @@
 | Completada | Los entregables y criterios indicados fueron verificados. |
 | Pendiente | La fase todavía no comenzó o no cumple todos sus criterios. |
 
-<<<<<<< Updated upstream
-La documentación inicial y el EDA se marcan como completados. No se atribuyen avances de preprocesamiento, entrenamiento, evaluación ni resultados financieros que no existen.
-=======
 La documentación inicial, el EDA y el preprocesamiento se marcan como completados. No se atribuyen avances de entrenamiento, evaluación ni resultados financieros que todavía no existen.
->>>>>>> Stashed changes
 
 ## Resumen
 
@@ -21,11 +17,7 @@ La documentación inicial, el EDA y el preprocesamiento se marcan como completad
 |---|---|---|
 | 1. Documentación inicial | Completada | Requisitos e inspección del repositorio. |
 | 2. Análisis exploratorio | Completada | Fase 1 y dataset disponible. |
-<<<<<<< Updated upstream
-| 3. Preprocesamiento | Pendiente | Hallazgos del EDA. |
-=======
 | 3. Preprocesamiento | Completada | Hallazgos del EDA. |
->>>>>>> Stashed changes
 | 4. Entrenamiento del MLP | Pendiente | Pipeline y particiones validados. |
 | 5. Evaluación y calibración | Pendiente | Modelo candidato entrenado. |
 | 6. Exportación del modelo | Pendiente | Modelo y evaluación aprobados. |
@@ -51,7 +43,7 @@ La documentación inicial, el EDA y el preprocesamiento se marcan como completad
 
 **Objetivo:** comprender calidad, distribuciones, desbalance y relaciones relevantes antes de transformar datos.
 
-**Actividades:** validar dimensiones y tipos; analizar faltantes, duplicados y atípicos; estudiar `Exited`; explorar relaciones y sesgos; generar visualizaciones reproducibles; comprobar coherencia de variables simuladas.
+**Actividades:** validar dimensiones y tipos; analizar faltantes, duplicados y atípicos; estudiar `Exited`; explorar relaciones y sesgos; generar visualizaciones reproducibles; excluir las variables financieras simuladas del análisis predictivo y reservar su validación detallada para la fase financiera.
 
 **Entregables:** [`notebooks/01_eda.ipynb`](../notebooks/01_eda.ipynb) ejecutado e [informe de resultados](eda-results.md), con gráficos, hallazgos y decisiones de tratamiento.
 
@@ -63,15 +55,9 @@ La documentación inicial, el EDA y el preprocesamiento se marcan como completad
 
 **Objetivo:** construir un pipeline sin fuga de información y reutilizable en inferencia.
 
-<<<<<<< Updated upstream
-**Actividades:** fijar semilla y partición estratificada; seleccionar nueve predictoras; definir imputación si aplica; escalar numéricas; codificar `Geography`; calcular ponderaciones de clase; probar categorías desconocidas.
-
-**Entregables:** pipeline de Scikit-learn, particiones reproducibles y pruebas de selección/transformación.
-=======
 **Actividades:** fijar semilla y partición estratificada; seleccionar nueve predictoras; escalar numéricas con entrenamiento; codificar `Geography`; conservar binarias; verificar categorías desconocidas, valores finitos y ausencia de solapamiento.
 
 **Entregables:** [`notebooks/02_preprocesamiento.ipynb`](../notebooks/02_preprocesamiento.ipynb) ejecutado, pipeline de Scikit-learn en memoria, particiones reproducibles y comprobaciones de selección y transformación.
->>>>>>> Stashed changes
 
 **Criterios de finalización:** transformadores ajustados solo con entrenamiento, objetivo y columnas excluidas ausentes de las entradas, misma transformación para lote e individuo.
 
@@ -181,8 +167,4 @@ La documentación inicial, el EDA y el preprocesamiento se marcan como completad
 
 ## Próximo paso
 
-<<<<<<< Updated upstream
-El EDA está completado y pendiente de revisión del equipo. La fase 3, preprocesamiento, no comenzará hasta recibir aprobación; el entrenamiento permanecerá pendiente hasta completar y validar ese pipeline.
-=======
 El EDA y el preprocesamiento están completados y pendientes de revisión del equipo. La fase 4, entrenamiento del MLP, permanecerá pendiente hasta recibir aprobación explícita de las particiones y del pipeline.
->>>>>>> Stashed changes

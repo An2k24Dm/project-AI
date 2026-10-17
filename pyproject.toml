@@ -8,10 +8,7 @@ dependencies = [
     "matplotlib>=3.9,<4",
     "numpy>=2.0,<3",
     "pandas>=2.2,<3",
-<<<<<<< Updated upstream
-=======
     "scikit-learn>=1.5,<2",
->>>>>>> Stashed changes
 ]
 
 [tool.uv]

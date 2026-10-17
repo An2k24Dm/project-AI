@@ -4,11 +4,7 @@
 
 Deep Retention es un proyecto académico de inteligencia artificial orientado a estimar la probabilidad de abandono de clientes bancarios y convertir esa estimación en decisiones de retención económicamente justificadas. La solución combinará una red neuronal profunda, un motor de rentabilidad y una aplicación interactiva en Streamlit.
 
-<<<<<<< Updated upstream
-> **Estado actual:** documentación técnica y análisis exploratorio completados. El entorno reproducible de EDA está bloqueado con `uv`; el preprocesamiento definitivo, entrenamiento, motor financiero y aplicación todavía no están implementados. El comando de Streamlit será operativo cuando se incorporen la aplicación y sus artefactos.
-=======
 > **Estado actual:** documentación técnica, análisis exploratorio y preprocesamiento completados. El entorno reproducible incluye Scikit-learn y las particiones 70/15/15; el entrenamiento, motor financiero y aplicación todavía no están implementados. El comando de Streamlit será operativo cuando se incorporen la aplicación y sus artefactos.
->>>>>>> Stashed changes
 
 ## Objetivos
 
@@ -33,10 +29,7 @@ donde \(P_f\) es la probabilidad de fuga, \(E_i\) la efectividad estimada del in
 | Documentación técnica | Disponible | Documentos de arquitectura, datos, ML, finanzas, aplicación, desarrollo y hoja de ruta. |
 | Catálogo de incentivos | Pendiente | `Deep_Retention_Catalogo_Incentivos.csv` no está presente todavía. |
 | Análisis exploratorio | Completado | Notebook ejecutado e [informe de resultados](docs/eda-results.md) verificado. |
-<<<<<<< Updated upstream
-=======
 | Preprocesamiento | Completado | Particiones estratificadas y `ColumnTransformer` verificados en `notebooks/02_preprocesamiento.ipynb`. |
->>>>>>> Stashed changes
 | MLP de abandono | Planificado | TensorFlow/Keras con preprocesamiento de Scikit-learn. |
 | Motor financiero | Planificado | Evaluación de elegibilidad y selección de la mayor GNE positiva. |
 | Aplicación Streamlit | Planificado | Buscador, dashboard y simulador. |
@@ -59,11 +52,7 @@ donde \(P_f\) es la probabilidad de fuga, \(E_i\) la efectividad estimada del in
 | Pruebas | Pytest |
 | Versionado | Git y GitHub |
 
-<<<<<<< Updated upstream
-Las versiones compatibles de Python, TensorFlow y Scikit-learn se fijarán durante la preparación del entorno reproducible. No se utilizan bases de datos, Docker, microservicios, API REST ni un frontend independiente.
-=======
 Python 3.11 y Scikit-learn ya están fijados por el entorno reproducible; TensorFlow se incorporará y validará durante la fase de entrenamiento. No se utilizan bases de datos, Docker, microservicios, API REST ni un frontend independiente.
->>>>>>> Stashed changes
 
 ## Arquitectura resumida
 
@@ -98,12 +87,8 @@ project-AI/
 │   ├── eda-results.md
 │   └── roadmap.md
 ├── notebooks/
-<<<<<<< Updated upstream
-│   └── 01_eda.ipynb
-=======
 │   ├── 01_eda.ipynb
 │   └── 02_preprocesamiento.ipynb
->>>>>>> Stashed changes
 ├── app.py
 ├── src/
 │   ├── data_processing.py
@@ -160,11 +145,7 @@ Desde la raíz del repositorio:
 uv run streamlit run app.py
 ```
 
-<<<<<<< Updated upstream
-En el estado actual este comando todavía no es funcional porque `app.py`, los artefactos del modelo y el catálogo de incentivos aún no han sido creados. `pyproject.toml`, `uv.lock` y `.python-version` ya reproducen el entorno del EDA.
-=======
 En el estado actual este comando todavía no es funcional porque `app.py`, los artefactos del modelo y el catálogo de incentivos aún no han sido creados. `pyproject.toml`, `uv.lock` y `.python-version` ya reproducen el entorno del EDA y del preprocesamiento.
->>>>>>> Stashed changes
 
 ## Flujo previsto
 
@@ -189,8 +170,4 @@ En el estado actual este comando todavía no es funcional porque `app.py`, los a
 
 ## Estado y próximo hito
 
-<<<<<<< Updated upstream
-Las fases de documentación inicial y análisis exploratorio están completadas. El proyecto queda a la espera de revisión y aprobación del EDA antes de comenzar el preprocesamiento definitivo; no se ha entrenado ningún modelo.
-=======
 Las fases de documentación inicial, análisis exploratorio y preprocesamiento están completadas. El proyecto queda a la espera de revisión y aprobación del pipeline antes de comenzar el entrenamiento; no se ha entrenado ningún modelo.
->>>>>>> Stashed changes
