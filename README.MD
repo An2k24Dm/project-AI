@@ -4,7 +4,7 @@
 
 Deep Retention es un proyecto académico de inteligencia artificial orientado a estimar la probabilidad de abandono de clientes bancarios y convertir esa estimación en decisiones de retención económicamente justificadas. La solución combinará una red neuronal profunda, un motor de rentabilidad y una aplicación interactiva en Streamlit.
 
-> **Estado actual:** documentación técnica, análisis exploratorio y preprocesamiento completados. El entorno reproducible incluye Scikit-learn y las particiones 70/15/15; el entrenamiento, motor financiero y aplicación todavía no están implementados. El comando de Streamlit será operativo cuando se incorporen la aplicación y sus artefactos.
+> **Estado actual:** documentación técnica, análisis exploratorio, preprocesamiento y primer entrenamiento del MLP completados. El entorno reproducible incluye Scikit-learn, TensorFlow/Keras y las particiones 70/15/15. La evaluación final sobre prueba, calibración, exportación, motor financiero y aplicación todavía están pendientes.
 
 ## Objetivos
 
@@ -30,7 +30,7 @@ donde \(P_f\) es la probabilidad de fuga, \(E_i\) la efectividad estimada del in
 | Catálogo de incentivos | Pendiente | `Deep_Retention_Catalogo_Incentivos.csv` no está presente todavía. |
 | Análisis exploratorio | Completado | Notebook ejecutado e [informe de resultados](docs/eda-results.md) verificado. |
 | Preprocesamiento | Completado | Particiones estratificadas y `ColumnTransformer` verificados en `notebooks/02_preprocesamiento.ipynb`. |
-| MLP de abandono | Planificado | TensorFlow/Keras con preprocesamiento de Scikit-learn. |
+| MLP de abandono | Entrenamiento inicial completado | Primer candidato entrenado; métricas disponibles solo en validación. |
 | Motor financiero | Planificado | Evaluación de elegibilidad y selección de la mayor GNE positiva. |
 | Aplicación Streamlit | Planificado | Buscador, dashboard y simulador. |
 | Pruebas automatizadas | Planificado | Pruebas unitarias y de integración con Pytest. |
@@ -52,7 +52,7 @@ donde \(P_f\) es la probabilidad de fuga, \(E_i\) la efectividad estimada del in
 | Pruebas | Pytest |
 | Versionado | Git y GitHub |
 
-Python 3.11 y Scikit-learn ya están fijados por el entorno reproducible; TensorFlow se incorporará y validará durante la fase de entrenamiento. No se utilizan bases de datos, Docker, microservicios, API REST ni un frontend independiente.
+Python 3.11, Scikit-learn 1.9.1 y TensorFlow 2.21.0 están fijados por el entorno reproducible. No se utilizan bases de datos, Docker, microservicios, API REST ni un frontend independiente.
 
 ## Arquitectura resumida
 
@@ -88,7 +88,8 @@ project-AI/
 │   └── roadmap.md
 ├── notebooks/
 │   ├── 01_eda.ipynb
-│   └── 02_preprocesamiento.ipynb
+│   ├── 02_preprocesamiento.ipynb
+│   └── 03_red_neuronal.ipynb
 ├── app.py
 ├── src/
 │   ├── data_processing.py
@@ -145,7 +146,7 @@ Desde la raíz del repositorio:
 uv run streamlit run app.py
 ```
 
-En el estado actual este comando todavía no es funcional porque `app.py`, los artefactos del modelo y el catálogo de incentivos aún no han sido creados. `pyproject.toml`, `uv.lock` y `.python-version` ya reproducen el entorno del EDA y del preprocesamiento.
+En el estado actual este comando todavía no es funcional porque `app.py`, los artefactos del modelo y el catálogo de incentivos aún no han sido creados. `pyproject.toml`, `uv.lock` y `.python-version` ya reproducen el entorno del EDA, el preprocesamiento y el entrenamiento inicial.
 
 ## Flujo previsto
 
@@ -170,4 +171,4 @@ En el estado actual este comando todavía no es funcional porque `app.py`, los a
 
 ## Estado y próximo hito
 
-Las fases de documentación inicial, análisis exploratorio y preprocesamiento están completadas. El proyecto queda a la espera de revisión y aprobación del pipeline antes de comenzar el entrenamiento; no se ha entrenado ningún modelo.
+Las fases de documentación inicial, análisis exploratorio, preprocesamiento y primer entrenamiento están completadas. El conjunto de prueba permanece aislado y el proyecto queda a la espera de aprobación antes de avanzar a evaluación final, calibración o exportación.

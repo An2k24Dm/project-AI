@@ -4,7 +4,7 @@
 
 ## Estado y objetivo
 
-El [EDA](eda-results.md) y el preprocesamiento reproducible de datos ya están implementados como notebooks independientes. El EDA solo diagnostica el CSV; [`02_preprocesamiento.ipynb`](../notebooks/02_preprocesamiento.ipynb) vuelve a cargarlo, limpia una copia, crea las particiones y transforma las nueve características sin fuga de información. Todavía no se ha entrenado ningún modelo; por tanto, no existen métricas predictivas, curvas, hiperparámetros definitivos ni conclusiones de rendimiento.
+El [EDA](eda-results.md), el preprocesamiento reproducible y el primer entrenamiento del MLP ya están implementados como notebooks independientes. El EDA solo diagnostica el CSV; [`02_preprocesamiento.ipynb`](../notebooks/02_preprocesamiento.ipynb) prepara las particiones y [`03_red_neuronal.ipynb`](../notebooks/03_red_neuronal.ipynb) reproduce ese preprocesamiento para entrenar un primer modelo con ponderación de clases. Solo existen métricas iniciales de validación: el conjunto de prueba permanece reservado y todavía no se han realizado la evaluación final, la calibración ni la exportación de artefactos.
 
 El objetivo es aprender, mediante clasificación supervisada, una función que estime:
 
@@ -120,34 +120,49 @@ Las 11 columnas finales corresponden a seis numéricas estandarizadas, tres indi
 
 La exportación a `models/preprocesador.joblib` sigue pendiente. Se realizará junto con el entrenamiento para guardar exactamente el transformador utilizado por el modelo aprobado; Streamlit no reconstruirá las transformaciones manualmente.
 
-## Arquitectura inicial del MLP
+## Arquitectura implementada del MLP
 
-La arquitectura de partida, sujeta a evaluación, será:
+El primer modelo utiliza la API Sequential de TensorFlow/Keras 2.21.0:
 
-| Etapa | Configuración inicial |
+| Etapa | Configuración implementada |
 |---|---|
-| Entrada | Dimensión producida por el preprocesador. |
-| Capa oculta 1 | 64–128 unidades, ReLU, Batch Normalization y Dropout de 0,2–0,3. |
-| Capa oculta 2 | 32–64 unidades, ReLU y Dropout de 0,1–0,2. |
+| Entrada | 11 características producidas dinámicamente por el preprocesador. |
+| Capa oculta 1 | 128 unidades, ReLU. |
+| Regularización 1 | Batch Normalization y Dropout de 0,25. |
+| Capa oculta 2 | 64 unidades, ReLU. |
+| Regularización 2 | Dropout de 0,15. |
 | Salida | 1 unidad con Sigmoid. |
-| Optimizador | Adam. |
+| Parámetros | 10.369 totales: 10.113 entrenables y 256 no entrenables. |
+| Optimizador | Adam con tasa de aprendizaje predeterminada. |
 | Pérdida | Binary Crossentropy. |
+| Métricas de seguimiento | Binary Accuracy, ROC-AUC y PR-AUC. |
 
-ReLU aporta no linealidad en las capas ocultas; Sigmoid permite interpretar la salida como una probabilidad. El número exacto de unidades, tasas de Dropout, tasa de aprendizaje, tamaño de lote y número máximo de épocas serán decisiones experimentales, no valores asumidos por esta documentación.
+ReLU aporta no linealidad, Batch Normalization estabiliza las activaciones y Dropout limita la dependencia excesiva entre neuronas. Sigmoid restringe la salida a `[0, 1]`, pero no garantiza por sí sola que las probabilidades estén calibradas.
 
-## Entrenamiento y desbalance
+## Entrenamiento y desbalance implementados
 
-El entrenamiento deberá:
+La ejecución fija la semilla 42 y calcula `class_weight="balanced"` exclusivamente con `y_train`:
 
-- fijar semillas cuando las bibliotecas lo permitan;
-- calcular ponderaciones de clase a partir del conjunto de entrenamiento;
-- usar el conjunto de validación durante el ajuste;
-- aplicar Early Stopping con paciencia dentro del rango de 10 a 15 épocas;
-- restaurar los mejores pesos según una métrica de validación elegida explícitamente;
-- registrar curvas de pérdida y métricas para diagnosticar sobreajuste;
-- conservar configuración, versiones y resultados del experimento seleccionado.
+| Clase | Registros de entrenamiento | Proporción | Peso |
+|---|---:|---:|---:|
+| `0` — permaneció | 5.574 | 79,63 % | 0,6279 |
+| `1` — abandonó | 1.426 | 20,37 % | 2,4544 |
 
-La ponderación de clases busca evitar que la clase mayoritaria domine el aprendizaje. Su efecto deberá evaluarse también sobre la calibración: mejorar el recall no garantiza probabilidades bien calibradas.
+Los pesos se pasan a `model.fit()` mediante `class_weight`; no se aplica SMOTE ni se duplican o eliminan clientes. La validación conserva su distribución original.
+
+El entrenamiento utiliza un máximo de 100 épocas, `batch_size=32` y Early Stopping con `monitor="val_loss"`, paciencia 12 y `restore_best_weights=True`. Se ejecutaron 39 épocas; la menor pérdida de validación apareció en la época 27 (`val_loss = 0,4184`) y esos pesos fueron restaurados. Las curvas muestran aprendizaje durante las primeras épocas y un sobreajuste leve posterior, limitado por Early Stopping.
+
+## Resultados iniciales de validación
+
+Las probabilidades se generaron únicamente para los 1.500 registros de validación y todas fueron finitas y pertenecieron a `[0, 1]`:
+
+| Métrica | Validación |
+|---|---:|
+| ROC-AUC | 0,8669 |
+| Average Precision | 0,7099 |
+| Brier Score | 0,1354 |
+
+Con los mejores pesos restaurados, Keras registró accuracy 0,8040 y PR-AUC 0,7093 en validación, frente a accuracy 0,8266 y PR-AUC 0,7432 en entrenamiento. La diferencia sugiere sobreajuste leve. Estas cifras son resultados de validación, no una evaluación definitiva ni evidencia de idoneidad para producción bancaria. La ponderación de clases puede afectar la calibración, que todavía no se ha ajustado.
 
 ## Evaluación
 

@@ -4,7 +4,7 @@
 
 ## Estado
 
-Esta guía establece las reglas para la implementación futura. El EDA y el preprocesamiento disponen de un entorno bloqueado con Python 3.11, Jupyter, Pandas, NumPy, Matplotlib y Scikit-learn. Todavía no hay código de aplicación, pruebas ni artefactos entrenados; TensorFlow/Keras y Streamlit se añadirán tras validar su compatibilidad en sus fases correspondientes.
+Esta guía establece las reglas para la implementación futura. El EDA, el preprocesamiento y el primer entrenamiento disponen de un entorno bloqueado con Python 3.11, Jupyter, Pandas, NumPy, Matplotlib, Scikit-learn y TensorFlow/Keras. Todavía no hay código de aplicación, pruebas automatizadas ni artefactos exportados; Streamlit se añadirá en su fase correspondiente.
 
 ## Principios
 
@@ -59,7 +59,7 @@ Ejemplos de contratos a implementar posteriormente incluyen leer y validar clien
 
 Los archivos disponibles son:
 
-- `pyproject.toml`: metadatos, Python 3.11 y dependencias directas del EDA y el preprocesamiento;
+- `pyproject.toml`: metadatos, Python 3.11 y dependencias directas del EDA, el preprocesamiento y el entrenamiento inicial;
 - `uv.lock`: resolución exacta y reproducible;
 - `.python-version`: versión de Python elegida para el proyecto.
 

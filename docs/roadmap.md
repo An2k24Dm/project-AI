@@ -9,7 +9,7 @@
 | Completada | Los entregables y criterios indicados fueron verificados. |
 | Pendiente | La fase todavía no comenzó o no cumple todos sus criterios. |
 
-La documentación inicial, el EDA y el preprocesamiento se marcan como completados. No se atribuyen avances de entrenamiento, evaluación ni resultados financieros que todavía no existen.
+La documentación inicial, el EDA, el preprocesamiento y el primer entrenamiento del MLP se marcan como completados. La evaluación final sobre prueba, la calibración, la exportación y los resultados financieros todavía no existen.
 
 ## Resumen
 
@@ -18,7 +18,7 @@ La documentación inicial, el EDA y el preprocesamiento se marcan como completad
 | 1. Documentación inicial | Completada | Requisitos e inspección del repositorio. |
 | 2. Análisis exploratorio | Completada | Fase 1 y dataset disponible. |
 | 3. Preprocesamiento | Completada | Hallazgos del EDA. |
-| 4. Entrenamiento del MLP | Pendiente | Pipeline y particiones validados. |
+| 4. Entrenamiento del MLP | Completada | Pipeline y particiones validados. |
 | 5. Evaluación y calibración | Pendiente | Modelo candidato entrenado. |
 | 6. Exportación del modelo | Pendiente | Modelo y evaluación aprobados. |
 | 7. Motor financiero | Pendiente | Catálogo disponible y definiciones financieras aprobadas. |
@@ -69,9 +69,9 @@ La documentación inicial, el EDA y el preprocesamiento se marcan como completad
 
 **Actividades:** implementar arquitectura inicial; configurar Adam y Binary Crossentropy; aplicar class weights, Dropout y Early Stopping; registrar experimentos y curvas; controlar sobreajuste.
 
-**Entregables:** modelos candidatos, historiales de entrenamiento y configuración reproducible.
+**Entregables:** [`notebooks/03_red_neuronal.ipynb`](../notebooks/03_red_neuronal.ipynb) ejecutado, primer modelo candidato en memoria, historial, curvas y métricas iniciales de validación.
 
-**Criterios de finalización:** entrenamiento reproducible, mejor época identificada con validación y ausencia de uso del conjunto de prueba para seleccionar el modelo.
+**Criterios de finalización:** entrenamiento reproducible completado con semilla 42, pesos de clase calculados solo con `y_train`, mejor época 27 identificada con validación, Early Stopping en la época 39 y ausencia de uso del conjunto de prueba.
 
 **Dependencias:** fase 3 completada.
 
@@ -167,4 +167,4 @@ La documentación inicial, el EDA y el preprocesamiento se marcan como completad
 
 ## Próximo paso
 
-El EDA y el preprocesamiento están completados y pendientes de revisión del equipo. La fase 4, entrenamiento del MLP, permanecerá pendiente hasta recibir aprobación explícita de las particiones y del pipeline.
+El EDA, el preprocesamiento y el primer entrenamiento del MLP están completados. El modelo obtuvo métricas iniciales únicamente en validación; la fase 5, evaluación y calibración, permanecerá pendiente hasta recibir aprobación explícita. El conjunto de prueba sigue aislado y no se han exportado artefactos.
