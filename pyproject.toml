@@ -1,0 +1,18 @@
+[project]
+name = "deep-retention"
+version = "0.1.0"
+description = "Sistema académico de predicción de abandono y retención selectiva de clientes"
+requires-python = "==3.11.*"
+dependencies = [
+    "jupyter>=1.1,<2",
+    "matplotlib>=3.9,<4",
+    "numpy>=2.0,<3",
+    "pandas>=2.2,<3",
+<<<<<<< Updated upstream
+=======
+    "scikit-learn>=1.5,<2",
+>>>>>>> Stashed changes
+]
+
+[tool.uv]
+package = false
