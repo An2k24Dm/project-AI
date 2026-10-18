@@ -4,7 +4,7 @@
 
 ## Estado
 
-Esta guía establece las reglas para la implementación futura. El EDA, el preprocesamiento y el primer entrenamiento disponen de un entorno bloqueado con Python 3.11, Jupyter, Pandas, NumPy, Matplotlib, Scikit-learn y TensorFlow/Keras. Todavía no hay código de aplicación, pruebas automatizadas ni artefactos exportados; Streamlit se añadirá en su fase correspondiente.
+Esta guía establece las reglas para la implementación futura. El EDA, el preprocesamiento y el primer entrenamiento disponen de un entorno bloqueado con Python 3.11, Jupyter, Pandas, NumPy, Matplotlib, Scikit-learn, Joblib y TensorFlow/Keras. El dataset limpio, las particiones, los metadatos y `models/preprocesador.joblib` ya están exportados y verificados. Todavía no hay MLP exportado, código de aplicación ni pruebas automatizadas; Streamlit se añadirá en su fase correspondiente.
 
 ## Principios
 
@@ -86,9 +86,17 @@ uv run streamlit run app.py
 
 El profesor solo necesitará el último comando para la demostración; entrenamiento y evaluación forman parte del mantenimiento del proyecto.
 
+### Orden reproducible actual
+
+1. Ejecutar `notebooks/02_preprocesamiento.ipynb` desde cero. Este notebook es el único responsable de la limpieza, la partición, el ajuste del `ColumnTransformer` y la exportación de `data/processed/` y `models/preprocesador.joblib`.
+2. Ejecutar `notebooks/03_red_neuronal.ipynb` desde cero. Debe consumir `train.npz`, `validation.npz` y `metadata.json`; no debe leer el CSV original, reconstruir el preprocesador ni cargar prueba.
+
+`notebooks/01_eda.ipynb` permanece independiente y no es un requisito de ejecución para los notebooks 2 y 3.
+
 ## Datos y rutas
 
 - Los CSV y artefactos necesarios para la demostración deberán estar dentro del repositorio si licencia y tamaño lo permiten.
+- `data/processed/` y `models/preprocesador.joblib` se regeneran juntos mediante el notebook 2 y comparten un identificador verificable.
 - Las rutas se resolverán desde la raíz, no desde el directorio de trabajo accidental del usuario.
 - La aplicación leerá datos y artefactos; las simulaciones no los modificarán.
 - El esquema esperado se validará antes de inferir.

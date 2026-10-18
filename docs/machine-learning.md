@@ -4,7 +4,7 @@
 
 ## Estado y objetivo
 
-El [EDA](eda-results.md), el preprocesamiento reproducible y el primer entrenamiento del MLP ya están implementados como notebooks independientes. El EDA solo diagnostica el CSV; [`02_preprocesamiento.ipynb`](../notebooks/02_preprocesamiento.ipynb) prepara las particiones y [`03_red_neuronal.ipynb`](../notebooks/03_red_neuronal.ipynb) reproduce ese preprocesamiento para entrenar un primer modelo con ponderación de clases. Solo existen métricas iniciales de validación: el conjunto de prueba permanece reservado y todavía no se han realizado la evaluación final, la calibración ni la exportación de artefactos.
+El [EDA](eda-results.md), el preprocesamiento reproducible y el primer entrenamiento del MLP ya están implementados como notebooks independientes. El EDA solo diagnostica el CSV; [`02_preprocesamiento.ipynb`](../notebooks/02_preprocesamiento.ipynb) limpia una copia, prepara las particiones y exporta el preprocesador y los datos transformados. [`03_red_neuronal.ipynb`](../notebooks/03_red_neuronal.ipynb) carga únicamente entrenamiento, validación y metadatos, sin repetir la limpieza, división ni transformación. Solo existen métricas iniciales de validación: el conjunto de prueba permanece reservado y todavía no se han realizado la evaluación final, la calibración ni la exportación del MLP.
 
 El objetivo es aprender, mediante clasificación supervisada, una función que estime:
 
@@ -30,14 +30,15 @@ Las nueve características autorizadas son:
 
 ```mermaid
 flowchart TD
-    A[CSV validado] --> B[EDA y controles de calidad]
-    B --> L[Limpieza en una copia dentro del notebook 2]
-    L --> C[Separación estratificada]
-    C --> D[Conjunto de entrenamiento]
-    C --> V[Conjunto de validación]
-    C --> T[Conjunto de prueba aislado]
-    D --> P[Ajustar preprocesador solo con entrenamiento]
-    P --> M[Entrenar MLP con class_weight]
+    A[CSV original] -. diagnóstico independiente .-> B[Notebook 1: EDA]
+    A --> L[Notebook 2: limpieza en una copia]
+    L --> C[Separación estratificada 70/15/15]
+    C --> P[Ajustar preprocesador solo con entrenamiento]
+    P --> R[Exportar CSV limpio, NPZ, metadatos y joblib]
+    R --> D[train.npz]
+    R --> V[validation.npz]
+    R --> T[test.npz aislado]
+    D --> M[Notebook 3: entrenar MLP con class_weight]
     V --> H[Selección y Early Stopping]
     M --> H
     H --> E[Evaluación única en prueba]
@@ -118,7 +119,9 @@ El preprocesador solo recibe `fit_transform` sobre `X_train`; validación y prue
 
 Las 11 columnas finales corresponden a seis numéricas estandarizadas, tres indicadores geográficos y dos variables binarias. No contienen valores `NaN` ni infinitos y son compatibles con la futura entrada de Keras.
 
-La exportación a `models/preprocesador.joblib` sigue pendiente. Se realizará junto con el entrenamiento para guardar exactamente el transformador utilizado por el modelo aprobado; Streamlit no reconstruirá las transformaciones manualmente.
+El notebook 2 exporta `models/preprocesador.joblib` y comprueba su recarga y equivalencia. También guarda `clientes_limpios.csv`, `train.npz`, `validation.npz`, `test.npz` y `metadata.json` en `data/processed/`. Cada NPZ contiene `X`, `y`, los índices de las filas originales y el identificador común del artefacto. Los metadatos registran la huella del CSV fuente, la semilla, el esquema, el orden de las nueve entradas y de las once salidas transformadas.
+
+El flujo reproducible es `02_preprocesamiento.ipynb` → `03_red_neuronal.ipynb`. El notebook 3 verifica identificador, esquema, formas, tipos, valores finitos, etiquetas y ausencia de solapamiento antes de entrenar; no carga `test.npz`. Las matrices exportadas coinciden byte por byte con las producidas por el flujo anterior aprobado, por lo que la reorganización no alteró los datos de entrenamiento ni los resultados.
 
 ## Arquitectura implementada del MLP
 
@@ -205,14 +208,13 @@ La técnica definitiva y sus resultados quedan pendientes.
 
 ## Exportación e inferencia
 
-Los artefactos objetivo son:
+El preprocesador ya está exportado; el artefacto predictivo pendiente es:
 
 ```text
 models/modelo_churn.keras
-models/preprocesador.joblib
 ```
 
-Antes de exportar se registrarán:
+Antes de exportar el MLP se completarán o confirmarán:
 
 - versión del dataset o huella verificable;
 - lista y orden de características;

@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Sistema académico de predicción de abandono y retención selectiva de clientes"
 requires-python = "==3.11.*"
 dependencies = [
+    "joblib>=1.4,<2",
     "jupyter>=1.1,<2",
     "matplotlib>=3.9,<4",
     "numpy>=2.0,<3",

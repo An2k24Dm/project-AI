@@ -101,4 +101,4 @@ Las asociaciones restantes son débiles. Esto no determina que una variable sea 
 
 ## Decisión de fase
 
-El dataset fue diagnosticado sin modificaciones. La limpieza y el pipeline se implementan de manera independiente en `02_preprocesamiento.ipynb`. No se ha avanzado al entrenamiento.
+El dataset fue diagnosticado sin modificaciones. La limpieza y el pipeline se implementan de manera independiente en `02_preprocesamiento.ipynb`; el entrenamiento inicial posterior se encuentra en `03_red_neuronal.ipynb`. El EDA no realiza ninguna de esas transformaciones ni entrena modelos.

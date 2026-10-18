@@ -4,7 +4,7 @@
 
 Deep Retention es un proyecto académico de inteligencia artificial orientado a estimar la probabilidad de abandono de clientes bancarios y convertir esa estimación en decisiones de retención económicamente justificadas. La solución combinará una red neuronal profunda, un motor de rentabilidad y una aplicación interactiva en Streamlit.
 
-> **Estado actual:** documentación técnica, análisis exploratorio, preprocesamiento y primer entrenamiento del MLP completados. El entorno reproducible incluye Scikit-learn, TensorFlow/Keras y las particiones 70/15/15. La evaluación final sobre prueba, calibración, exportación, motor financiero y aplicación todavía están pendientes.
+> **Estado actual:** documentación técnica, análisis exploratorio, preprocesamiento y primer entrenamiento del MLP completados. El notebook 2 exporta el dataset limpio, las particiones 70/15/15, sus metadatos y el preprocesador; el notebook 3 consume únicamente entrenamiento y validación. La evaluación final sobre prueba, la calibración, la exportación del MLP, el motor financiero y la aplicación todavía están pendientes.
 
 ## Objetivos
 
@@ -29,7 +29,7 @@ donde \(P_f\) es la probabilidad de fuga, \(E_i\) la efectividad estimada del in
 | Documentación técnica | Disponible | Documentos de arquitectura, datos, ML, finanzas, aplicación, desarrollo y hoja de ruta. |
 | Catálogo de incentivos | Pendiente | `Deep_Retention_Catalogo_Incentivos.csv` no está presente todavía. |
 | Análisis exploratorio | Completado | Notebook ejecutado e [informe de resultados](docs/eda-results.md) verificado. |
-| Preprocesamiento | Completado | Particiones estratificadas y `ColumnTransformer` verificados en `notebooks/02_preprocesamiento.ipynb`. |
+| Preprocesamiento | Completado | Limpieza, particiones estratificadas, `ColumnTransformer` y artefactos reproducibles verificados en `notebooks/02_preprocesamiento.ipynb`. |
 | MLP de abandono | Entrenamiento inicial completado | Primer candidato entrenado; métricas disponibles solo en validación. |
 | Motor financiero | Planificado | Evaluación de elegibilidad y selección de la mayor GNE positiva. |
 | Aplicación Streamlit | Planificado | Buscador, dashboard y simulador. |
@@ -101,10 +101,16 @@ project-AI/
 │   └── evaluate.py
 ├── data/
 │   ├── Deep_Retention_Dataset.csv
+│   ├── processed/
+│   │   ├── clientes_limpios.csv
+│   │   ├── train.npz
+│   │   ├── validation.npz
+│   │   ├── test.npz
+│   │   └── metadata.json
 │   └── incentivos.csv              # pendiente
 ├── models/
-│   ├── modelo_churn.keras
-│   └── preprocesador.joblib
+│   ├── preprocesador.joblib
+│   └── modelo_churn.keras           # pendiente
 ├── tests/
 ├── pyproject.toml
 ├── uv.lock
@@ -146,7 +152,14 @@ Desde la raíz del repositorio:
 uv run streamlit run app.py
 ```
 
-En el estado actual este comando todavía no es funcional porque `app.py`, los artefactos del modelo y el catálogo de incentivos aún no han sido creados. `pyproject.toml`, `uv.lock` y `.python-version` ya reproducen el entorno del EDA, el preprocesamiento y el entrenamiento inicial.
+En el estado actual este comando todavía no es funcional porque `app.py`, el MLP exportado y el catálogo de incentivos aún no han sido creados. El preprocesador y los datos procesados sí están disponibles; `pyproject.toml`, `uv.lock` y `.python-version` reproducen el entorno del EDA, el preprocesamiento y el entrenamiento inicial.
+
+## Orden reproducible de los notebooks
+
+1. Ejecutar `notebooks/02_preprocesamiento.ipynb` para cargar y limpiar una copia del CSV, crear las particiones, ajustar el preprocesador solo con entrenamiento y exportar todos los artefactos de datos.
+2. Ejecutar `notebooks/03_red_neuronal.ipynb` para cargar exclusivamente `train.npz`, `validation.npz` y `metadata.json`, y entrenar el MLP candidato.
+
+`notebooks/01_eda.ipynb` es un diagnóstico independiente: puede ejecutarse por separado y no genera entradas para los otros notebooks. El archivo `test.npz` queda reservado para la fase de evaluación final.
 
 ## Flujo previsto
 
@@ -171,4 +184,4 @@ En el estado actual este comando todavía no es funcional porque `app.py`, los a
 
 ## Estado y próximo hito
 
-Las fases de documentación inicial, análisis exploratorio, preprocesamiento y primer entrenamiento están completadas. El conjunto de prueba permanece aislado y el proyecto queda a la espera de aprobación antes de avanzar a evaluación final, calibración o exportación.
+Las fases de documentación inicial, análisis exploratorio, preprocesamiento y primer entrenamiento están completadas. Los artefactos de datos y `models/preprocesador.joblib` están verificados; el MLP todavía no se ha exportado. El conjunto de prueba permanece aislado y el proyecto queda a la espera de aprobación antes de avanzar a evaluación final o calibración.

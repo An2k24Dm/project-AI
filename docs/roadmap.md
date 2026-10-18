@@ -9,7 +9,7 @@
 | Completada | Los entregables y criterios indicados fueron verificados. |
 | Pendiente | La fase todavía no comenzó o no cumple todos sus criterios. |
 
-La documentación inicial, el EDA, el preprocesamiento y el primer entrenamiento del MLP se marcan como completados. La evaluación final sobre prueba, la calibración, la exportación y los resultados financieros todavía no existen.
+La documentación inicial, el EDA, el preprocesamiento y el primer entrenamiento del MLP se marcan como completados. Los datos procesados y el preprocesador ya están exportados; la evaluación final sobre prueba, la calibración, la exportación del MLP y los resultados financieros todavía no existen.
 
 ## Resumen
 
@@ -55,11 +55,11 @@ La documentación inicial, el EDA, el preprocesamiento y el primer entrenamiento
 
 **Objetivo:** construir un pipeline sin fuga de información y reutilizable en inferencia.
 
-**Actividades:** fijar semilla y partición estratificada; seleccionar nueve predictoras; escalar numéricas con entrenamiento; codificar `Geography`; conservar binarias; verificar categorías desconocidas, valores finitos y ausencia de solapamiento.
+**Actividades:** limpiar una copia del CSV; fijar semilla y partición estratificada; seleccionar nueve predictoras; escalar numéricas con entrenamiento; codificar `Geography`; conservar binarias; verificar categorías desconocidas, valores finitos y ausencia de solapamiento; exportar datos, metadatos y preprocesador.
 
-**Entregables:** [`notebooks/02_preprocesamiento.ipynb`](../notebooks/02_preprocesamiento.ipynb) ejecutado, pipeline de Scikit-learn en memoria, particiones reproducibles y comprobaciones de selección y transformación.
+**Entregables:** [`notebooks/02_preprocesamiento.ipynb`](../notebooks/02_preprocesamiento.ipynb) ejecutado; `data/processed/clientes_limpios.csv`; `train.npz`, `validation.npz` y `test.npz`; `metadata.json`; y `models/preprocesador.joblib`.
 
-**Criterios de finalización:** transformadores ajustados solo con entrenamiento, objetivo y columnas excluidas ausentes de las entradas, misma transformación para lote e individuo.
+**Criterios de finalización:** transformadores ajustados solo con entrenamiento, objetivo y columnas excluidas ausentes de las entradas, misma transformación para lote e individuo, recarga equivalente y un identificador común entre artefactos. Las matrices exportadas coinciden con el flujo previamente aprobado.
 
 **Dependencias:** decisiones del EDA.
 
@@ -67,11 +67,11 @@ La documentación inicial, el EDA, el preprocesamiento y el primer entrenamiento
 
 **Objetivo:** obtener un MLP candidato que estime probabilidades de abandono.
 
-**Actividades:** implementar arquitectura inicial; configurar Adam y Binary Crossentropy; aplicar class weights, Dropout y Early Stopping; registrar experimentos y curvas; controlar sobreajuste.
+**Actividades:** cargar exclusivamente entrenamiento, validación y metadatos exportados por el notebook 2; validar su compatibilidad; implementar la arquitectura inicial; configurar Adam y Binary Crossentropy; aplicar class weights, Dropout y Early Stopping; registrar experimentos y curvas; controlar sobreajuste.
 
 **Entregables:** [`notebooks/03_red_neuronal.ipynb`](../notebooks/03_red_neuronal.ipynb) ejecutado, primer modelo candidato en memoria, historial, curvas y métricas iniciales de validación.
 
-**Criterios de finalización:** entrenamiento reproducible completado con semilla 42, pesos de clase calculados solo con `y_train`, mejor época 27 identificada con validación, Early Stopping en la época 39 y ausencia de uso del conjunto de prueba.
+**Criterios de finalización:** entrenamiento reproducible completado con semilla 42, sin repetir limpieza o preprocesamiento, pesos de clase calculados solo con `y_train`, mejor época 27 identificada con validación, Early Stopping en la época 39 y ausencia de uso del conjunto de prueba.
 
 **Dependencias:** fase 3 completada.
 
@@ -91,9 +91,9 @@ La documentación inicial, el EDA, el preprocesamiento y el primer entrenamiento
 
 **Objetivo:** producir artefactos compatibles y listos para inferencia sin entrenamiento.
 
-**Actividades:** guardar el MLP en `models/modelo_churn.keras`; guardar el pipeline en `models/preprocesador.joblib`; registrar versiones, esquema y huellas; probar recarga y paridad de predicciones.
+**Actividades:** guardar el MLP en `models/modelo_churn.keras`; asociarlo al `models/preprocesador.joblib` ya exportado; completar versiones, esquema y huellas; probar recarga y paridad de predicciones.
 
-**Entregables:** pareja de artefactos, metadatos de versión y prueba de carga.
+**Entregables:** pareja completa de artefactos predictivos, metadatos de versión y prueba de carga.
 
 **Criterios de finalización:** recarga exitosa en entorno bloqueado, misma salida dentro de tolerancia y archivos aptos para distribución según licencia/tamaño.
 
@@ -167,4 +167,4 @@ La documentación inicial, el EDA, el preprocesamiento y el primer entrenamiento
 
 ## Próximo paso
 
-El EDA, el preprocesamiento y el primer entrenamiento del MLP están completados. El modelo obtuvo métricas iniciales únicamente en validación; la fase 5, evaluación y calibración, permanecerá pendiente hasta recibir aprobación explícita. El conjunto de prueba sigue aislado y no se han exportado artefactos.
+El EDA, el preprocesamiento y el primer entrenamiento del MLP están completados. Los datos procesados, sus metadatos y el preprocesador están exportados y verificados; el MLP no está exportado. El modelo obtuvo métricas iniciales únicamente en validación; la fase 5, evaluación y calibración, permanecerá pendiente hasta recibir aprobación explícita. El conjunto de prueba sigue aislado.

@@ -1,0 +1,75 @@
+{
+  "preprocessing_schema_version": "1.0",
+  "artifact_id": "3a2890fbab71e9c8",
+  "source": {
+    "filename": "Deep_Retention_Dataset.csv",
+    "sha256": "92269a89d774dfd9065f9b8d04a05e7ea647da289c1a4a83a7893ea50a1adc3e",
+    "records": 10000,
+    "columns": 21
+  },
+  "features": [
+    "CreditScore",
+    "Geography",
+    "Age",
+    "Tenure",
+    "Balance",
+    "NumOfProducts",
+    "HasCrCard",
+    "IsActiveMember",
+    "EstimatedSalary"
+  ],
+  "transformed_features": [
+    "CreditScore",
+    "Age",
+    "Tenure",
+    "Balance",
+    "NumOfProducts",
+    "EstimatedSalary",
+    "Geography_France",
+    "Geography_Germany",
+    "Geography_Spain",
+    "HasCrCard",
+    "IsActiveMember"
+  ],
+  "split": {
+    "random_state": 42,
+    "train": 0.7,
+    "validation": 0.15,
+    "test": 0.15
+  },
+  "datasets": {
+    "train": {
+      "file": "train.npz",
+      "X_shape": [
+        7000,
+        11
+      ],
+      "y_shape": [
+        7000
+      ]
+    },
+    "validation": {
+      "file": "validation.npz",
+      "X_shape": [
+        1500,
+        11
+      ],
+      "y_shape": [
+        1500
+      ]
+    },
+    "test": {
+      "file": "test.npz",
+      "X_shape": [
+        1500,
+        11
+      ],
+      "y_shape": [
+        1500
+      ]
+    }
+  },
+  "scikit_learn_version": "1.9.1",
+  "preprocessor_file": "preprocesador.joblib",
+  "clean_dataset_file": "clientes_limpios.csv"
+}
