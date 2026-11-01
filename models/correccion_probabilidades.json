@@ -1,0 +1,19 @@
+{
+    "method": "class_weight_prior_correction",
+    "class_weight_0": 0.6279153211338356,
+    "class_weight_1": 2.4544179523141656,
+    "artifact_id": "3a2890fbab71e9c8",
+    "features": [
+        "CreditScore",
+        "Age",
+        "Tenure",
+        "Balance",
+        "NumOfProducts",
+        "EstimatedSalary",
+        "Geography_France",
+        "Geography_Germany",
+        "Geography_Spain",
+        "HasCrCard",
+        "IsActiveMember"
+    ]
+}

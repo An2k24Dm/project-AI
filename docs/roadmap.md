@@ -9,7 +9,7 @@
 | Completada | Los entregables y criterios indicados fueron verificados. |
 | Pendiente | La fase todavía no comenzó o no cumple todos sus criterios. |
 
-La documentación inicial, el EDA, el preprocesamiento y el primer entrenamiento del MLP se marcan como completados. Los datos procesados y el preprocesador ya están exportados; la evaluación final sobre prueba, la calibración, la exportación del MLP y los resultados financieros todavía no existen.
+La documentación, el EDA, el preprocesamiento, el MLP, su evaluación, la exportación y el motor financiero están completados. La corrección probabilística actual es aproximada. Streamlit, el dashboard y el simulador todavía no existen.
 
 ## Resumen
 
@@ -19,9 +19,9 @@ La documentación inicial, el EDA, el preprocesamiento y el primer entrenamiento
 | 2. Análisis exploratorio | Completada | Fase 1 y dataset disponible. |
 | 3. Preprocesamiento | Completada | Hallazgos del EDA. |
 | 4. Entrenamiento del MLP | Completada | Pipeline y particiones validados. |
-| 5. Evaluación y calibración | Pendiente | Modelo candidato entrenado. |
-| 6. Exportación del modelo | Pendiente | Modelo y evaluación aprobados. |
-| 7. Motor financiero | Pendiente | Catálogo disponible y definiciones financieras aprobadas. |
+| 5. Evaluación y corrección probabilística | Completada | Modelo candidato entrenado. |
+| 6. Exportación del modelo | Completada | Modelo y evaluación aprobados. |
+| 7. Motor financiero | Completada | Catálogo y artefactos disponibles. |
 | 8. Construcción de Streamlit | Pendiente | Contratos de inferencia y finanzas definidos. |
 | 9. Integración | Pendiente | Componentes y artefactos disponibles. |
 | 10. Pruebas finales | Pendiente | Sistema integrado. |
@@ -69,23 +69,23 @@ La documentación inicial, el EDA, el preprocesamiento y el primer entrenamiento
 
 **Actividades:** cargar exclusivamente entrenamiento, validación y metadatos exportados por el notebook 2; validar su compatibilidad; implementar la arquitectura inicial; configurar Adam y Binary Crossentropy; aplicar class weights, Dropout y Early Stopping; registrar experimentos y curvas; controlar sobreajuste.
 
-**Entregables:** [`notebooks/03_red_neuronal.ipynb`](../notebooks/03_red_neuronal.ipynb) ejecutado, primer modelo candidato en memoria, historial, curvas y métricas iniciales de validación.
+**Entregables:** [`notebooks/03_red_neuronal.ipynb`](../notebooks/03_red_neuronal.ipynb) ejecutado, historial, curvas, métricas de validación y modelo candidato posteriormente exportado.
 
 **Criterios de finalización:** entrenamiento reproducible completado con semilla 42, sin repetir limpieza o preprocesamiento, pesos de clase calculados solo con `y_train`, mejor época 27 identificada con validación, Early Stopping en la época 39 y ausencia de uso del conjunto de prueba.
 
 **Dependencias:** fase 3 completada.
 
-## 5. Evaluación y calibración
+## 5. Evaluación y corrección probabilística
 
 **Objetivo:** medir discriminación, calidad probabilística y limitaciones del candidato.
 
-**Actividades:** calcular ROC-AUC, PR-AUC, Brier Score, matriz de confusión, precision, recall y F1; trazar calibración; decidir si calibrar; analizar factores influyentes con una técnica apropiada; revisar subgrupos.
+**Actividades:** evaluar discriminación y error probabilístico en prueba; aplicar y documentar la corrección aproximada por pesos de clase; preservar los resultados y sus limitaciones.
 
-**Entregables:** informe de evaluación con métricas reales, gráficos, decisión de calibración y análisis de explicabilidad.
+**Entregables:** evaluación en prueba con ROC-AUC 0,8635, Brier Score ajustado 0,0995 y configuración de corrección por prior.
 
-**Criterios de finalización:** conjunto de prueba usado una vez para evaluación final, resultados reproducibles, probabilidades válidas y limitaciones documentadas.
+**Criterios de finalización:** evaluación final registrada, probabilidades válidas y limitación explícita de que la corrección aproximada no es calibración aprendida.
 
-**Dependencias:** fase 4 y protocolo de evaluación fijado.
+**Dependencias:** fase 4 y protocolo de evaluación fijado. **Estado: completada.**
 
 ## 6. Exportación del modelo
 
@@ -93,23 +93,23 @@ La documentación inicial, el EDA, el preprocesamiento y el primer entrenamiento
 
 **Actividades:** guardar el MLP en `models/modelo_churn.keras`; asociarlo al `models/preprocesador.joblib` ya exportado; completar versiones, esquema y huellas; probar recarga y paridad de predicciones.
 
-**Entregables:** pareja completa de artefactos predictivos, metadatos de versión y prueba de carga.
+**Entregables:** `modelo_churn.keras`, `preprocesador.joblib`, `correccion_probabilidades.json` y carga compatible mediante `PredictorFuga`.
 
 **Criterios de finalización:** recarga exitosa en entorno bloqueado, misma salida dentro de tolerancia y archivos aptos para distribución según licencia/tamaño.
 
-**Dependencias:** evaluación y calibración aprobadas.
+**Dependencias:** evaluación y corrección aprobadas. **Estado: completada.**
 
 ## 7. Implementación del motor financiero
 
 **Objetivo:** seleccionar intervenciones elegibles con la mayor GNE positiva.
 
-**Actividades:** recibir e inspeccionar el catálogo; validar unidades y períodos; implementar GNE, rentabilidad y elegibilidad; tratar clientes deficitarios; agregar métricas; preparar simulaciones inmutables.
+**Actividades:** inspeccionar y validar el catálogo; implementar percentiles comerciales, GNE, rentabilidad, elegibilidad, decisiones diferenciadas y agregados; bloquear clientes deficitarios; verificar la cartera completa.
 
-**Entregables:** módulo financiero, catálogo validado y pruebas unitarias de reglas y agregados.
+**Entregables:** `src/financial.py`, `data/incentivos.csv`, [`04_analisis_financiero.ipynb`](../notebooks/04_analisis_financiero.ipynb) ejecutado y pruebas unitarias y de integración.
 
 **Criterios de finalización:** `GNE <= 0` siempre rechazada, clientes deficitarios no intervenidos, mejor alternativa seleccionada y resultados trazables.
 
-**Dependencias:** catálogo real disponible, [definiciones financieras](financial-model.md) aprobadas y probabilidad consumible.
+**Dependencias:** catálogo académico disponible, [definiciones financieras](financial-model.md) aprobadas y probabilidad consumible. **Estado: completada.**
 
 ## 8. Construcción de Streamlit
 
@@ -167,4 +167,4 @@ La documentación inicial, el EDA, el preprocesamiento y el primer entrenamiento
 
 ## Próximo paso
 
-El EDA, el preprocesamiento y el primer entrenamiento del MLP están completados. Los datos procesados, sus metadatos y el preprocesador están exportados y verificados; el MLP no está exportado. El modelo obtuvo métricas iniciales únicamente en validación; la fase 5, evaluación y calibración, permanecerá pendiente hasta recibir aprobación explícita. El conjunto de prueba sigue aislado.
+Los tres objetivos iniciales están completados: predicción, filtro de rentabilidad y catálogo de acciones. La suite actual verifica 33 casos y la cartera consolidada no asigna gastos a clientes deficitarios. El próximo paso es la fase 8, construcción de Streamlit, que deberá consumir los artefactos y módulos existentes sin reentrenar.

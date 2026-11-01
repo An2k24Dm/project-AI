@@ -4,7 +4,7 @@
 
 ## Estado y objetivo
 
-El [EDA](eda-results.md), el preprocesamiento reproducible y el primer entrenamiento del MLP ya están implementados como notebooks independientes. El EDA solo diagnostica el CSV; [`02_preprocesamiento.ipynb`](../notebooks/02_preprocesamiento.ipynb) limpia una copia, prepara las particiones y exporta el preprocesador y los datos transformados. [`03_red_neuronal.ipynb`](../notebooks/03_red_neuronal.ipynb) carga únicamente entrenamiento, validación y metadatos, sin repetir la limpieza, división ni transformación. Solo existen métricas iniciales de validación: el conjunto de prueba permanece reservado y todavía no se han realizado la evaluación final, la calibración ni la exportación del MLP.
+El EDA, el preprocesamiento, el entrenamiento, la evaluación y la exportación del MLP están completados. [`src/prediction.py`](../src/prediction.py) carga `preprocesador.joblib`, `modelo_churn.keras` y `correccion_probabilidades.json`, verifica su compatibilidad y ofrece inferencia individual y por lotes sin reentrenar.
 
 El objetivo es aprender, mediante clasificación supervisada, una función que estime:
 
@@ -165,30 +165,22 @@ Las probabilidades se generaron únicamente para los 1.500 registros de validaci
 | Average Precision | 0,7099 |
 | Brier Score | 0,1354 |
 
-Con los mejores pesos restaurados, Keras registró accuracy 0,8040 y PR-AUC 0,7093 en validación, frente a accuracy 0,8266 y PR-AUC 0,7432 en entrenamiento. La diferencia sugiere sobreajuste leve. Estas cifras son resultados de validación, no una evaluación definitiva ni evidencia de idoneidad para producción bancaria. La ponderación de clases puede afectar la calibración, que todavía no se ha ajustado.
+Con los mejores pesos restaurados, Keras registró accuracy 0,8040 y PR-AUC 0,7093 en validación, frente a accuracy 0,8266 y PR-AUC 0,7432 en entrenamiento. La diferencia sugiere sobreajuste leve. Estas cifras no constituyen evidencia de idoneidad para producción bancaria. La corrección posterior por pesos de clase es aproximada y no sustituye una calibración aprendida.
 
-## Evaluación
+## Evaluación final
 
-El conjunto de prueba deberá producir, como mínimo:
+El modelo exportado obtuvo en el conjunto de prueba:
 
-| Métrica o artefacto | Propósito |
-|---|---|
-| ROC-AUC | Capacidad de ordenamiento a través de distintos umbrales. |
-| PR-AUC | Rendimiento sobre la clase positiva bajo desbalance. |
-| Brier Score | Error cuadrático de las probabilidades. |
-| Curva de calibración | Correspondencia entre probabilidad estimada y frecuencia observada. |
-| Matriz de confusión | Errores para un umbral de análisis declarado. |
-| Precision | Proporción de positivos predichos que abandonaron. |
-| Recall | Proporción de abandonos históricos detectados. |
-| F1-score | Balance armónico entre precision y recall. |
+| Métrica | Resultado |
+|---|---:|
+| ROC-AUC | 0,8635 |
+| Brier Score después de la corrección | 0,0995 |
 
-La exactitud podrá reportarse como contexto, pero no será el criterio principal. Los intervalos de confianza o la variabilidad entre semillas son deseables si el calendario lo permite.
+Estas métricas describen el artefacto actual y no autorizan su uso bancario productivo. El conjunto de prueba no se utiliza durante la inferencia de cartera ni para modificar las reglas financieras.
 
 ### Calibración
 
-Las decisiones económicas multiplican directamente la probabilidad por un margen, por lo que la calibración es crítica. Se comparará la curva de calibración y el Brier Score antes y después de cualquier técnica adicional. Si se aplica calibración, el método se ajustará con datos separados de la prueba final y se exportará como parte inequívoca del flujo de inferencia.
-
-No se añadirá calibración si no mejora evidencia relevante o si introduce fuga de información.
+Las decisiones económicas multiplican directamente la probabilidad por un margen. `correccion_probabilidades.json` aplica una reversión algebraica aproximada del cambio de prior inducido por `class_weight`, usando los pesos del entrenamiento. Esta corrección mejoró el Brier Score reportado, pero **no equivale a una calibración aprendida** ni demuestra calibración fuera del dataset. Una calibración futura deberá ajustarse sin reutilizar prueba.
 
 ### Umbrales y decisión económica
 
@@ -208,20 +200,23 @@ La técnica definitiva y sus resultados quedan pendientes.
 
 ## Exportación e inferencia
 
-El preprocesador ya está exportado; el artefacto predictivo pendiente es:
+Los artefactos compatibles ya exportados son:
 
 ```text
 models/modelo_churn.keras
+models/preprocesador.joblib
+models/correccion_probabilidades.json
 ```
 
-Antes de exportar el MLP se completarán o confirmarán:
+La configuración registra el identificador `3a2890fbab71e9c8`, los pesos de clase y el orden de las once características transformadas. `PredictorFuga` verifica:
 
-- versión del dataset o huella verificable;
-- lista y orden de características;
-- partición y semilla;
-- versiones de Python, TensorFlow/Keras, Scikit-learn y Joblib;
-- arquitectura e hiperparámetros;
-- métricas finales y decisión de calibración.
+- existencia de los tres archivos;
+- coincidencia del identificador entre preprocesador y corrección;
+- orden de características y dimensión de entrada del MLP;
+- columnas, faltantes, tipos, finitud, categorías y dominios binarios;
+- una salida finita en `[0, 1]` por cliente.
+
+`predecir_lote()` conserva el orden de las filas y produce resultados numéricamente equivalentes a invocar `predecir()` cliente por cliente. Las columnas adicionales, incluida `Exited`, no se incorporan a la matriz predictora.
 
 En Streamlit, la inferencia seguirá siempre el orden: validar registro → seleccionar nueve características → transformar con el objeto exportado → ejecutar `predict` con el modelo exportado → validar que la salida sea finita y pertenezca a `[0, 1]` → entregar la probabilidad al motor financiero.
 

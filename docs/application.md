@@ -155,7 +155,7 @@ Desde la raíz del proyecto y con `uv` instalado:
 uv run streamlit run app.py
 ```
 
-`uv` resolverá el entorno bloqueado por `pyproject.toml`, `uv.lock` y `.python-version`. La primera ejecución podrá necesitar Internet para dependencias; después, la aplicación no deberá requerir descargar datasets o modelos. Este comando todavía no funciona porque `app.py`, el catálogo y los artefactos entrenados no existen.
+`uv` resolverá el entorno bloqueado por `pyproject.toml`, `uv.lock` y `.python-version`. La primera ejecución podrá necesitar Internet para dependencias; después, la aplicación no deberá requerir descargar datasets o modelos. El catálogo y los artefactos ya existen; este comando todavía no funciona únicamente porque `app.py` no se ha implementado.
 
 ## Criterios de aceptación
 

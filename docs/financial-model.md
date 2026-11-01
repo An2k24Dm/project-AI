@@ -4,105 +4,120 @@
 
 ## Estado y propósito
 
-El motor financiero está **planificado y aún no implementado**. Su propósito es transformar una probabilidad de abandono en una decisión económicamente defendible. Riesgo alto no implica por sí solo que deba ofrecerse un incentivo: la intervención debe ser elegible, aplicable a un cliente rentable y producir ganancia neta esperada estrictamente positiva.
+El motor está implementado en [`src/financial.py`](../src/financial.py), integrado con la inferencia en [`04_analisis_financiero.ipynb`](../notebooks/04_analisis_financiero.ipynb) y cubierto por Pytest. Convierte una probabilidad ajustada de abandono en una decisión económica trazable; no utiliza `Exited` ni un umbral fijo de probabilidad.
 
-Los datos financieros del dataset son simulados y las salidas serán proyecciones académicas, no resultados reales de una campaña bancaria.
+Todos los importes financieros con sufijo `_USD_Sim`, los costos, las efectividades y las reglas comerciales son supuestos académicos. Las salidas son proyecciones, no resultados observados de una campaña ni eficacia causal demostrada.
 
 ## Ganancia neta esperada
 
-Para un cliente \(c\) y un incentivo \(i\):
+Para un cliente (c) y un incentivo (i):
 
 \[
 GNE_{c,i}=(P_{f,c}\times E_i\times M_c)-C_i
 \]
 
-| Símbolo | Significado | Restricción |
-|---|---|---|
-| \(P_{f,c}\) | Probabilidad de abandono estimada por el modelo para el cliente. | Valor finito en `[0, 1]`; no usar `Exited`. |
-| \(E_i\) | Efectividad estimada del incentivo. | Proporción en `[0, 1]`, con fuente o supuesto documentado. |
-| \(M_c\) | Margen económico comparable del cliente. | En la versión inicial se prevé `AnnualNetMargin_USD_Sim`; debe ser positivo. |
-| \(C_i\) | Costo total comparable del incentivo. | No negativo y expresado en el mismo período y moneda que el margen. |
+| Símbolo | Implementación |
+|---|---|
+| (P_{f,c}) | Probabilidad ajustada, finita y en `[0, 1]`, producida por `PredictorFuga`. |
+| (E_i) | Efectividad académica en `[0, 1]` definida en `data/incentivos.csv`. |
+| (M_c) | `AnnualNetMargin_USD_Sim`, margen neto anual simulado en USD. |
+| (C_i) | `costo_anual_usd`, costo académico anual en USD. |
 
-La interpretación de \(P_f\times E_i\) es la probabilidad esperada de evitar la pérdida atribuible a la intervención bajo los supuestos adoptados. La fórmula no demuestra causalidad; la efectividad deberá validarse en un contexto real antes de tomar decisiones productivas.
+`AnnualNetMargin_USD_Sim` ya incorpora el ingreso por comisiones y el margen financiero, menos los costos operativos. El motor no suma nuevamente esos componentes y evita así una doble contabilización. Los 10.000 registros cumplen:
 
-## Márgenes y período
+\[
+\text{AnnualCommissionIncome} + \text{AnnualFinancialMargin}
+- \text{AnnualOperatingCosts} = \text{AnnualNetMargin}
+\]
 
-El dataset distingue:
+con diferencia máxima observada de USD 0,00.
 
-- ingreso anual por comisiones: `AnnualCommissionIncome_USD_Sim`;
-- margen financiero anual: `AnnualFinancialMargin_USD_Sim`;
-- costos operativos anuales: `AnnualOperatingCosts_USD_Sim`;
-- margen neto anual: `AnnualNetMargin_USD_Sim`.
+## Catálogo y reglas comerciales
 
-El motor utilizará un único concepto de margen configurado y documentado. La propuesta inicial es el margen neto anual simulado porque incorpora ingresos, margen financiero y costos. Antes de programar se deberá validar la fórmula de generación de este campo.
+El catálogo versionado contiene cuatro alternativas:
 
-Todos los costos de incentivos deberán convertirse al mismo horizonte anual y a USD si el catálogo usa otra periodicidad o unidad. No se mezclarán costos mensuales con márgenes anuales sin una conversión explícita.
+| Incentivo | Costo anual USD | Efectividad | Margen mínimo USD | Condición comercial |
+|---|---:|---:|---:|---|
+| Bonificación transaccional | 20 | 20 % | 0 | Transacciones mensuales desde p50. |
+| Exoneración de comisiones | 50 | 40 % | 150 | Ingreso anual por comisiones desde p50. |
+| Tasa preferencial | 100 | 55 % | 400 | `Balance` desde p75 y volumen mensual desde p50. |
+| Gestor personalizado | 200 | 75 % | 800 | `Balance` desde p90 y volumen mensual desde p75. |
 
-Un cliente con \(M_c\leq 0\) es deficitario para esta regla y no será intervenido, aunque su probabilidad de abandono sea alta.
+Los percentiles se calculan sobre la cartera analizada. En la versión actual los cortes reproducibles son:
 
-## Catálogo de incentivos
+| Variable | Percentil | Corte observado |
+|---|---:|---:|
+| `MonthlyTransactions_Sim` | p50 | 20 transacciones/mes |
+| `AnnualCommissionIncome_USD_Sim` | p50 | USD 111,60/año |
+| `Balance` | p75 | 127.644,24 en unidad no declarada |
+| `Balance` | p90 | 149.244,792 en unidad no declarada |
+| `MonthlyTransactionVolume_USD_Sim` | p50 | USD 4.500,66/mes |
+| `MonthlyTransactionVolume_USD_Sim` | p75 | USD 7.170,1225/mes |
 
-El archivo `Deep_Retention_Catalogo_Incentivos.csv` no está presente. Por ello, la documentación no atribuye columnas ni valores reales al catálogo. Cuando se reciba, deberán verificarse como mínimo los conceptos de identificación, nombre, costo, efectividad y condiciones de elegibilidad según su esquema real.
+La unidad de `Balance` no está declarada. Por eso se utiliza únicamente su posición relativa dentro del dataset; no se etiqueta como USD ni se convierte a otra moneda.
 
-Las categorías comerciales previstas incluyen:
+## Validación del catálogo
 
-- atención por gestor VIP;
-- tarifas preferenciales;
-- exoneración de comisiones;
-- bonificaciones transaccionales;
-- no intervención.
+`validar_catalogo()` rechaza catálogos vacíos, incompletos, con faltantes, identificadores o nombres duplicados, importes no finitos, costos o márgenes mínimos negativos, efectividades fuera de `[0, 1]`, percentiles fuera de `[0, 1]` y perfiles desconocidos.
 
-Esta lista expresa tipos de acción requeridos, no confirma registros existentes en un CSV.
+Joblib y Keras solo cargan artefactos confiables incluidos en el proyecto. El catálogo se trata como entrada de solo lectura.
 
-## Elegibilidad y selección
+## Selección y decisiones
 
-El algoritmo funcional será:
+El flujo implementado es:
 
 ```mermaid
 flowchart TD
-    A[Cliente y probabilidad válida] --> B{¿Margen neto mayor que 0?}
-    B -->|No| N[No intervención: cliente deficitario]
-    B -->|Sí| C[Obtener incentivos elegibles]
-    C --> D[Normalizar costo y margen al mismo período]
-    D --> E[Calcular GNE de cada alternativa]
-    E --> F[Descartar GNE menor o igual a 0]
-    F --> G{¿Quedan alternativas?}
-    G -->|No| Z[No intervención: ninguna opción rentable]
-    G -->|Sí| H[Elegir la mayor GNE positiva]
-    H --> I[Devolver decisión y trazabilidad]
+    A[Probabilidad y cliente válidos] --> B{¿Margen neto anual > 0?}
+    B -->|No| S[Salida permitida: costo 0]
+    B -->|Sí| C[Evaluar reglas comerciales y margen mínimo]
+    C --> D[Calcular GNE de cada alternativa elegible]
+    D --> E[Descartar GNE menor o igual a 0]
+    E --> F{¿Quedan alternativas?}
+    F -->|No| N[No intervención: costo 0]
+    F -->|Sí| G[Elegir mayor GNE positiva]
+    G --> H[Empate: menor costo y luego menor ID]
+    H --> R[Retener con trazabilidad]
 ```
 
-Reglas obligatorias:
+Las tres decisiones tienen significados diferentes:
 
-1. Validar entradas, unidades y rangos.
-2. Aplicar condiciones de elegibilidad antes de comparar alternativas.
-3. Calcular la GNE para todas las alternativas elegibles.
-4. Descartar cada resultado con `GNE <= 0`.
-5. Elegir la mayor GNE positiva mediante un desempate determinista que se definirá con el catálogo.
-6. Registrar «No intervención» si el margen no es positivo o ninguna alternativa es rentable.
-7. Conservar el detalle de cálculo para auditoría y explicación al usuario.
+- **Salida permitida:** margen neto anual menor o igual a cero; se bloquea cualquier gasto.
+- **No intervención:** cliente rentable, pero ninguna alternativa es simultáneamente elegible y económicamente positiva.
+- **Retener:** existe al menos una alternativa elegible con `GNE > 0` y se selecciona la mayor.
 
-## Segmentación comercial frente a decisión financiera
+Cada resultado conserva probabilidad, margen anual, incentivo, perfil requerido, efectividad, costo, GNE, elegibilidad, motivo y detalle de todas las alternativas evaluadas. El criterio de desempate es determinista: menor costo anual y, si persiste el empate, menor `incentivo_id`.
 
-`ProfitabilitySegment_Sim` clasifica al cliente como `Rentable` o `No rentable` según una regla simulada preexistente. Los futuros segmentos de riesgo, derivados de la probabilidad, también serán categorías descriptivas.
+## Evaluación consolidada
 
-Ninguna categoría autoriza por sí misma una acción. La decisión final debe recalcularse con los valores numéricos vigentes, las reglas de elegibilidad y `GNE > 0`. Esto evita confundir una etiqueta comercial con una recomendación económica.
+La ejecución completa sobre los 10.000 clientes produjo:
 
-## Indicadores agregados
+| Indicador | Resultado |
+|---|---:|
+| Retener | 1.214 |
+| No intervención | 5.184 |
+| Salida permitida | 3.602 |
+| Inversión proyectada | USD 66.640,00 |
+| Valor rescatable estimado | USD 156.739,69 |
+| GNE total | USD 90.099,69 |
+| ROI proyectado | 135,20 % |
 
-Las definiciones definitivas deberán quedar codificadas y probadas antes de mostrar cifras. Conceptualmente:
+Distribución de las 1.214 recomendaciones:
 
-| Indicador | Definición prevista |
-|---|---|
-| Clientes analizados | Número de clientes con datos válidos y predicción disponible. |
-| Clientes de alto riesgo | Conteo según segmentos descriptivos cuyos límites estarán documentados; no equivale a clientes intervenidos. |
-| Capital total en riesgo | Agregación del importe económico expuesto ponderado por la probabilidad; el campo base exacto debe aprobarse antes de implementarlo. |
-| Capital rescatable estimado | Valor esperado preservado por las intervenciones seleccionadas, antes de restar sus costos. |
-| Inversión total | Suma de costos de incentivos seleccionados. |
-| Ganancia neta esperada total | Suma de las GNE de las intervenciones autorizadas. |
-| ROI proyectado | Relación entre ganancia neta esperada total e inversión total. |
+| Incentivo | Clientes |
+|---|---:|
+| Exoneración de comisiones | 536 |
+| Bonificación transaccional | 367 |
+| Tasa preferencial | 297 |
+| Gestor personalizado | 14 |
 
-Para una cartera \(S\) de intervenciones seleccionadas se propone:
+Ninguno de los 3.602 clientes con margen no positivo recibe un incentivo. Todas las recomendaciones tienen GNE estrictamente positiva.
+
+La primera implementación recomendaba 2.319 intervenciones y proyectaba USD 161.651,15 de GNE. Las nuevas reglas reducen las intervenciones en 1.105 y la GNE en USD 71.551,46 porque exigen coherencia entre la acción y el perfil transaccional, de comisiones, volumen o patrimonio relativo. No se forzaron los resultados anteriores.
+
+## Agregados
+
+Para las intervenciones seleccionadas (S):
 
 \[
 \text{Valor rescatable}=\sum_{(c,i)\in S} P_{f,c}E_iM_c
@@ -120,42 +135,22 @@ Para una cartera \(S\) de intervenciones seleccionadas se propone:
 \text{ROI proyectado}=\frac{\text{GNE total}}{\text{Inversión}}
 \]
 
-Si la inversión es cero, el ROI no se mostrará como cero ni infinito: se indicará «No aplicable». La definición de «capital total en riesgo» queda deliberadamente pendiente porque `Balance` y margen representan conceptos distintos y la documentación recibida no fija cuál usar.
+Si la inversión es cero, el ROI se devuelve como no aplicable (`None`), nunca como infinito.
 
-## Simulación
+## Pruebas y reproducción
 
-El simulador permitirá crear escenarios temporales variando costos, efectividades y otros supuestos aprobados. Cada escenario deberá:
+Las pruebas cubren probabilidades límite e inválidas, márgenes no positivos, GNE negativa/cero/positiva, elegibilidad, selección óptima, empates, catálogos inválidos, bloqueo de deficitarios y consistencia de agregados:
 
-- partir de una copia en memoria de los parámetros;
-- recalcular elegibilidad, GNE, inversión y ROI;
-- identificar los parámetros modificados respecto al escenario base;
-- no alterar `data/Deep_Retention_Dataset.csv` ni el catálogo;
-- permitir volver a los valores base de forma clara;
-- mantener coherencia de moneda y período.
+```bash
+uv run pytest -q
+```
 
-Los escenarios no modifican las probabilidades del MLP salvo que cambien datos predictivos, algo fuera del simulador financiero previsto.
+El análisis completo se reproduce ejecutando `notebooks/04_analisis_financiero.ipynb` después de disponer de los artefactos exportados.
 
-## Pruebas requeridas
+## Limitaciones
 
-El motor deberá contar con pruebas para:
-
-- cálculo exacto de la fórmula;
-- límites `P_f = 0` y `P_f = 1`;
-- rechazo de `GNE = 0` y `GNE < 0`;
-- rechazo de clientes con margen cero o negativo;
-- filtrado por elegibilidad;
-- selección de la mayor GNE positiva;
-- comportamiento determinista ante empates;
-- consistencia de agregados;
-- ROI no aplicable con inversión cero;
-- aislamiento de simulaciones respecto a los CSV.
-
-## Supuestos y limitaciones
-
-- Las efectividades serán estimaciones, no efectos causales demostrados, salvo evidencia futura.
-- Los campos financieros actuales son simulados.
-- La GNE es sensible a la calibración de la probabilidad y a los supuestos de costo, efectividad y margen.
-- La fórmula no incorpora valor temporal del dinero, duración de la retención, canibalización, restricciones presupuestarias ni capacidad operativa; añadirlos requeriría ampliar explícitamente el alcance.
-- No existe todavía catálogo verificable ni reglas reales de elegibilidad.
-- Las proyecciones no deben presentarse como ingresos realizados ni promesas de retorno.
-- Un umbral fijo de probabilidad no sustituye el análisis económico por alternativa.
+- Las efectividades y los costos son supuestos académicos, no estimaciones causales.
+- La corrección de probabilidades por pesos de clase es aproximada.
+- La cartera contiene registros utilizados durante el desarrollo del modelo; el resultado financiero no es una evaluación predictiva independiente.
+- La fórmula no incorpora valor temporal del dinero, duración de la retención, canibalización, presupuesto ni capacidad operativa.
+- Toda cifra es una proyección simulada y no debe presentarse como ganancia realizada.

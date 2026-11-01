@@ -4,7 +4,7 @@
 
 ## Estado
 
-Esta guía establece las reglas para la implementación futura. El EDA, el preprocesamiento y el primer entrenamiento disponen de un entorno bloqueado con Python 3.11, Jupyter, Pandas, NumPy, Matplotlib, Scikit-learn, Joblib y TensorFlow/Keras. El dataset limpio, las particiones, los metadatos y `models/preprocesador.joblib` ya están exportados y verificados. Todavía no hay MLP exportado, código de aplicación ni pruebas automatizadas; Streamlit se añadirá en su fase correspondiente.
+El entorno bloqueado incluye Python 3.11, Jupyter, Pandas, NumPy, Matplotlib, Scikit-learn, Joblib, TensorFlow/Keras y Pytest. Los datos procesados, el MLP, el preprocesador y la corrección están exportados; predicción y finanzas tienen pruebas automatizadas. Streamlit todavía no está implementado.
 
 ## Principios
 
@@ -53,7 +53,7 @@ Las funciones reutilizables deberán:
 - devolver estructuras con nombres inequívocos y unidades consistentes;
 - ser deterministas dadas las mismas entradas, salvo operaciones de ML con aleatoriedad controlada.
 
-Ejemplos de contratos a implementar posteriormente incluyen leer y validar clientes, preparar las nueve características, predecir probabilidades por lote, calcular una GNE, seleccionar una intervención y agregar indicadores.
+Los contratos implementados incluyen validar las nueve características, predecir individualmente y por lotes, validar el catálogo, calcular GNE, seleccionar una intervención y agregar indicadores.
 
 ## Gestión de dependencias con uv
 
@@ -90,6 +90,7 @@ El profesor solo necesitará el último comando para la demostración; entrenami
 
 1. Ejecutar `notebooks/02_preprocesamiento.ipynb` desde cero. Este notebook es el único responsable de la limpieza, la partición, el ajuste del `ColumnTransformer` y la exportación de `data/processed/` y `models/preprocesador.joblib`.
 2. Ejecutar `notebooks/03_red_neuronal.ipynb` desde cero. Debe consumir `train.npz`, `validation.npz` y `metadata.json`; no debe leer el CSV original, reconstruir el preprocesador ni cargar prueba.
+3. Ejecutar `notebooks/04_analisis_financiero.ipynb` para reproducir inferencia, elegibilidad y agregados con los artefactos ya exportados.
 
 `notebooks/01_eda.ipynb` permanece independiente y no es un requisito de ejecución para los notebooks 2 y 3.
 
@@ -105,7 +106,7 @@ El profesor solo necesitará el último comando para la demostración; entrenami
 
 ## Pruebas con Pytest
 
-No se implementan pruebas en esta fase. La estrategia prevista incluye pruebas unitarias para lógica pura y pruebas de integración para los límites entre módulos.
+La suite implementada contiene 33 pruebas para predicción, compatibilidad de artefactos, entradas inválidas, catálogo, GNE, elegibilidad, desempates y agregados. Se ejecuta con `uv run pytest -q`.
 
 ### Matriz mínima
 
@@ -126,17 +127,19 @@ No se implementan pruebas en esta fase. La estrategia prevista incluye pruebas u
 
 ### Pruebas unitarias
 
-Se centrarán en validadores, selección de características, fórmulas financieras, elegibilidad, desempates y agregaciones. Utilizarán datos mínimos creados para la prueba, sin depender del dataset completo cuando no sea necesario.
+Las pruebas se centran en validadores, selección de características, fórmulas financieras, elegibilidad, desempates y agregaciones. Utilizan datos mínimos cuando no necesitan los artefactos reales.
 
 ### Pruebas de integración
 
-Cubrirán:
+Las pruebas de integración actuales cubren:
 
 - CSV → validación → preprocesador → modelo → probabilidad;
 - probabilidad + cliente + catálogo → recomendación;
-- predicciones por lote → métricas del dashboard;
-- carga de los artefactos reales distribuidos;
-- inicio básico de la aplicación en un entorno creado desde `uv.lock`.
+- equivalencia entre predicción individual y por lotes;
+- decisiones de una muestra de cartera → agregados coherentes;
+- carga de los artefactos reales distribuidos.
+
+El inicio de Streamlit y sus vistas permanece pendiente hasta implementar `app.py`.
 
 Los resultados del conjunto de prueba del modelo no deben convertirse en asserts frágiles de igualdad exacta; se validarán contratos y tolerancias justificadas.
 

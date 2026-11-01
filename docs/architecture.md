@@ -4,7 +4,7 @@
 
 ## Estado del documento
 
-Este documento define la arquitectura de aplicación **planificada**. Actualmente están disponibles la documentación, el dataset en `data/Deep_Retention_Dataset.csv`, el notebook de EDA ejecutado y el entorno bloqueado con `uv`; no existen todavía componentes de inferencia, finanzas o Streamlit.
+La arquitectura de inferencia y finanzas ya está implementada: `src/prediction.py` carga los tres artefactos compatibles y `src/financial.py` aplica elegibilidad, GNE y agregados. Streamlit sigue planificado y no se implementa en esta fase.
 
 ## Estilo arquitectónico
 
@@ -27,8 +27,8 @@ Esta decisión reduce la preparación necesaria para la demostración y mantiene
 |---|---|---|
 | `app.py` | Navegación, entrada del usuario y presentación en Streamlit. | Módulos de `src/`; no contiene entrenamiento. |
 | `src/data_processing.py` | Lectura de CSV, validación de esquema y preparación de entradas. | Pandas, preprocesador exportado cuando corresponda. |
-| `src/prediction.py` | Carga del modelo y del preprocesador; predicción individual y por lotes. | TensorFlow/Keras, Joblib. |
-| `src/financial.py` | Elegibilidad, GNE, selección del incentivo y decisión de no intervención. | Dataset financiero y catálogo de incentivos. |
+| `src/prediction.py` | Carga y valida preprocesador, MLP y corrección; predicción individual y por lotes. | TensorFlow/Keras, Joblib. |
+| `src/financial.py` | Catálogo, percentiles comerciales, GNE, selección, cartera y agregados. | Pandas, datos financieros y catálogo. |
 | `src/analytics.py` | Agregados de cartera, ROI y datos para visualizaciones. | Predicciones y decisiones financieras. |
 | `training/train.py` | División de datos, ajuste del preprocesador y entrenamiento del MLP. | Pandas, Scikit-learn, TensorFlow/Keras. |
 | `training/evaluate.py` | Métricas, calibración, explicabilidad y evaluación final. | Modelo, preprocesador y conjunto de prueba. |
@@ -55,6 +55,7 @@ flowchart LR
     IC[(CSV de incentivos)] --> FN
     PP[(preprocesador.joblib)] --> PR
     NN[(modelo_churn.keras)] --> PR
+    CP[(correccion_probabilidades.json)] --> PR
     AN --> UI
 
     subgraph OFF[Flujo de entrenamiento fuera de Streamlit]
@@ -88,7 +89,7 @@ sequenceDiagram
     Prep-->>Pred: Vector transformado
     Pred->>MLP: Ejecuta inferencia
     MLP-->>Pred: Probabilidad de abandono [0, 1]
-    Pred-->>UI: Probabilidad calibrada si aplica
+    Pred-->>UI: Probabilidad con corrección aproximada
     UI->>Finanzas: Evalúa incentivos elegibles
     Finanzas-->>UI: Mejor GNE positiva o no intervención
     UI-->>Usuario: Riesgo, margen y decisión
@@ -110,16 +111,17 @@ El contrato mínimo es una probabilidad finita dentro de `[0, 1]`, asociada ineq
 
 ### Finanzas hacia presentación
 
-El resultado deberá conservar el incentivo evaluado, elegibilidad, costo comparable, efectividad, GNE y motivo de la decisión. Cuando no haya alternativa rentable o el cliente sea deficitario, se devolverá explícitamente «No intervención».
+El resultado conserva probabilidad, margen, incentivo, perfil requerido, elegibilidad, costo, efectividad, GNE, motivo y todas las alternativas evaluadas. Un margen no positivo produce «Salida permitida»; un cliente rentable sin alternativa conveniente produce «No intervención».
 
 ## Gestión de archivos
 
 La persistencia será exclusivamente local mediante CSV y artefactos serializados:
 
 - El dataset actual es `data/Deep_Retention_Dataset.csv` y se trata como entrada de solo lectura.
-- El catálogo esperado `Deep_Retention_Catalogo_Incentivos.csv` aún no está disponible; su esquema solo se documentará después de inspeccionarlo.
-- `models/modelo_churn.keras` almacenará la red entrenada.
-- `models/preprocesador.joblib` almacenará el pipeline ajustado con el conjunto de entrenamiento.
+- `data/incentivos.csv` contiene cuatro acciones y condiciones comerciales académicas verificadas.
+- `models/modelo_churn.keras` contiene la red entrenada.
+- `models/preprocesador.joblib` contiene el pipeline ajustado con entrenamiento.
+- `models/correccion_probabilidades.json` registra la corrección aproximada por pesos de clase y el identificador de artefacto.
 
 La aplicación tratará estos archivos como entradas de solo lectura. Las simulaciones vivirán en el estado de sesión de Streamlit y no sobrescribirán los CSV.
 

@@ -4,7 +4,7 @@
 
 Deep Retention es un proyecto académico de inteligencia artificial orientado a estimar la probabilidad de abandono de clientes bancarios y convertir esa estimación en decisiones de retención económicamente justificadas. La solución combinará una red neuronal profunda, un motor de rentabilidad y una aplicación interactiva en Streamlit.
 
-> **Estado actual:** documentación técnica, análisis exploratorio, preprocesamiento y primer entrenamiento del MLP completados. El notebook 2 exporta el dataset limpio, las particiones 70/15/15, sus metadatos y el preprocesador; el notebook 3 consume únicamente entrenamiento y validación. La evaluación final sobre prueba, la calibración, la exportación del MLP, el motor financiero y la aplicación todavía están pendientes.
+> **Estado actual:** los tres objetivos iniciales están implementados: inferencia con el MLP exportado, motor de GNE y catálogo de acciones con elegibilidad comercial. El modelo obtuvo ROC-AUC 0,8635 y Brier Score ajustado 0,0995 en prueba. La corrección de probabilidades es aproximada, no una calibración aprendida. Streamlit, el dashboard y el simulador siguen pendientes.
 
 ## Objetivos
 
@@ -27,13 +27,13 @@ donde \(P_f\) es la probabilidad de fuga, \(E_i\) la efectividad estimada del in
 |---|---|---|
 | Dataset de clientes | Disponible | `data/Deep_Retention_Dataset.csv`, con 10.000 registros y 21 columnas. |
 | Documentación técnica | Disponible | Documentos de arquitectura, datos, ML, finanzas, aplicación, desarrollo y hoja de ruta. |
-| Catálogo de incentivos | Pendiente | `Deep_Retention_Catalogo_Incentivos.csv` no está presente todavía. |
+| Catálogo de incentivos | Completado | `data/incentivos.csv`, con cuatro acciones y reglas académicas explícitas de elegibilidad. |
 | Análisis exploratorio | Completado | Notebook ejecutado e [informe de resultados](docs/eda-results.md) verificado. |
 | Preprocesamiento | Completado | Limpieza, particiones estratificadas, `ColumnTransformer` y artefactos reproducibles verificados en `notebooks/02_preprocesamiento.ipynb`. |
-| MLP de abandono | Entrenamiento inicial completado | Primer candidato entrenado; métricas disponibles solo en validación. |
-| Motor financiero | Planificado | Evaluación de elegibilidad y selección de la mayor GNE positiva. |
+| MLP de abandono | Completado | Modelo evaluado y exportado; inferencia individual y por lotes mediante `PredictorFuga`. |
+| Motor financiero | Completado | Elegibilidad comercial, GNE, desempate determinista y agregados de cartera verificados. |
 | Aplicación Streamlit | Planificado | Buscador, dashboard y simulador. |
-| Pruebas automatizadas | Planificado | Pruebas unitarias y de integración con Pytest. |
+| Pruebas automatizadas | Implementadas | 33 pruebas Pytest para predicción, catálogo, GNE, selección y agregados. |
 
 ## Tecnologías definidas
 
@@ -89,7 +89,8 @@ project-AI/
 ├── notebooks/
 │   ├── 01_eda.ipynb
 │   ├── 02_preprocesamiento.ipynb
-│   └── 03_red_neuronal.ipynb
+│   ├── 03_red_neuronal.ipynb
+│   └── 04_analisis_financiero.ipynb
 ├── app.py
 ├── src/
 │   ├── data_processing.py
@@ -107,11 +108,14 @@ project-AI/
 │   │   ├── validation.npz
 │   │   ├── test.npz
 │   │   └── metadata.json
-│   └── incentivos.csv              # pendiente
+│   └── incentivos.csv
 ├── models/
 │   ├── preprocesador.joblib
-│   └── modelo_churn.keras           # pendiente
+│   ├── modelo_churn.keras
+│   └── correccion_probabilidades.json
 ├── tests/
+│   ├── test_prediction.py
+│   └── test_financial.py
 ├── pyproject.toml
 ├── uv.lock
 ├── .python-version
@@ -152,14 +156,21 @@ Desde la raíz del repositorio:
 uv run streamlit run app.py
 ```
 
-En el estado actual este comando todavía no es funcional porque `app.py`, el MLP exportado y el catálogo de incentivos aún no han sido creados. El preprocesador y los datos procesados sí están disponibles; `pyproject.toml`, `uv.lock` y `.python-version` reproducen el entorno del EDA, el preprocesamiento y el entrenamiento inicial.
+En el estado actual este comando todavía no es funcional porque `app.py` no ha sido creado. El dataset, el catálogo, el preprocesador, el MLP y la corrección probabilística ya están disponibles y se cargan sin reentrenamiento.
 
 ## Orden reproducible de los notebooks
 
 1. Ejecutar `notebooks/02_preprocesamiento.ipynb` para cargar y limpiar una copia del CSV, crear las particiones, ajustar el preprocesador solo con entrenamiento y exportar todos los artefactos de datos.
 2. Ejecutar `notebooks/03_red_neuronal.ipynb` para cargar exclusivamente `train.npz`, `validation.npz` y `metadata.json`, y entrenar el MLP candidato.
+3. Ejecutar `notebooks/04_analisis_financiero.ipynb` para reproducir la inferencia y las decisiones económicas de los 10.000 clientes con los artefactos exportados.
 
-`notebooks/01_eda.ipynb` es un diagnóstico independiente: puede ejecutarse por separado y no genera entradas para los otros notebooks. El archivo `test.npz` queda reservado para la fase de evaluación final.
+`notebooks/01_eda.ipynb` es un diagnóstico independiente. `test.npz` ya fue utilizado para la evaluación final documentada, pero no se carga en el entrenamiento ni en el análisis financiero de cartera.
+
+Las pruebas automatizadas se ejecutan desde la raíz con:
+
+```bash
+uv run pytest -q
+```
 
 ## Flujo previsto
 
@@ -184,4 +195,4 @@ En el estado actual este comando todavía no es funcional porque `app.py`, el ML
 
 ## Estado y próximo hito
 
-Las fases de documentación inicial, análisis exploratorio, preprocesamiento y primer entrenamiento están completadas. Los artefactos de datos y `models/preprocesador.joblib` están verificados; el MLP todavía no se ha exportado. El conjunto de prueba permanece aislado y el proyecto queda a la espera de aprobación antes de avanzar a evaluación final o calibración.
+Los objetivos de predicción, rentabilidad y selección de incentivos están completados y verificados. En la evaluación consolidada se recomiendan 1.214 intervenciones, con inversión proyectada de USD 66.640,00 y GNE académica de USD 90.099,69; ninguna se asigna a clientes con margen no positivo. Estas cifras son simulaciones, no ganancias realizadas. El próximo hito es construir Streamlit sin reentrenar el modelo.

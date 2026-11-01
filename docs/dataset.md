@@ -9,9 +9,9 @@ La inspección inicial del repositorio encontró:
 | Recurso | Estado | Observación |
 |---|---|---|
 | `data/Deep_Retention_Dataset.csv` | Disponible | 10.000 filas y 21 columnas; EDA completado. |
-| `Deep_Retention_Catalogo_Incentivos.csv` | No disponible | Su estructura, costos, efectividades y condiciones no pueden validarse todavía. |
+| `data/incentivos.csv` | Disponible | Cuatro acciones con costos, efectividades y reglas comerciales académicas. |
 
-La ubicación vigente del dataset es `data/Deep_Retention_Dataset.csv`. El catálogo se incorporará posteriormente bajo `data/` cuando esté disponible. Cualquier cambio futuro de nombre deberá conservar trazabilidad con los archivos originales.
+La ubicación vigente del dataset es `data/Deep_Retention_Dataset.csv`. La copia limpia para inferencia está en `data/processed/clientes_limpios.csv` y el catálogo vigente en `data/incentivos.csv`.
 
 ## Origen y alcance
 
@@ -32,7 +32,7 @@ La siguiente tabla describe las 21 columnas observadas en el encabezado. Las uni
 | `Age` | Numérica | Base | Edad del cliente. | Años; rango observado 18–92. | Predictora. |
 | `Tenure` | Numérica discreta | Base | Antigüedad registrada. | Años; rango observado 0–10. | Predictora. |
 | `CreditScore` | Numérica | Base | Puntuación crediticia. | Puntos; rango observado 350–850. | Predictora. |
-| `Balance` | Numérica | Base | Saldo bancario. | Unidad monetaria no declarada; rango 0–250.898,09. | Predictora y visualización. |
+| `Balance` | Numérica | Base | Saldo bancario. | Unidad monetaria no declarada; rango 0–250.898,09. | Predictora y elegibilidad relativa por percentiles. |
 | `NumOfProducts` | Numérica discreta | Base | Cantidad de productos contratados. | Conteo; rango observado 1–4. | Predictora. |
 | `HasCrCard` | Binaria | Base | Indica si tiene tarjeta de crédito. | `0` = no, `1` = sí. | Predictora. |
 | `IsActiveMember` | Binaria | Base | Indica si es miembro activo. | `0` = no, `1` = sí. | Predictora. |
@@ -98,17 +98,11 @@ La inspección estructural inicial produjo estos resultados reproducibles sobre 
 
 El EDA reproducible confirmó estos controles y amplió el análisis de tipos, consistencia, distribuciones, valores atípicos y asociaciones. Véanse los [resultados del EDA](eda-results.md). El desbalance observado en `Exited` justifica evaluar ponderación de clases y métricas distintas de la exactitud.
 
-## Catálogo de incentivos pendiente
+## Catálogo de incentivos
 
-El archivo solicitado `Deep_Retention_Catalogo_Incentivos.csv` no está en el repositorio. Por tanto, no se documentan nombres de columnas, costos, efectividades ni reglas como si hubieran sido verificados.
+`data/incentivos.csv` contiene `incentivo_id`, nombre, costo anual en USD, efectividad, margen neto anual mínimo, perfil requerido y cuatro posibles requisitos percentiles. Los percentiles vinculan cada acción con `MonthlyTransactions_Sim`, `AnnualCommissionIncome_USD_Sim`, `Balance` o `MonthlyTransactionVolume_USD_Sim`.
 
-Cuando esté disponible se deberá:
-
-1. conservar una copia trazable del archivo recibido;
-2. inspeccionar nombres, tipos, unidades, faltantes y duplicados;
-3. confirmar el período de cada costo y efectividad;
-4. validar las condiciones de elegibilidad;
-5. documentar su esquema real antes de implementar el motor financiero.
+Los costos, efectividades, márgenes mínimos y umbrales son supuestos académicos. `validar_catalogo()` comprueba esquema, faltantes, duplicados, dominios, importes y perfiles antes de cualquier decisión. El catálogo no se presenta como política real de una entidad bancaria.
 
 ## Limitaciones
 
