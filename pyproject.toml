@@ -1,0 +1,23 @@
+[project]
+name = "deep-retention"
+version = "0.1.0"
+description = "Sistema académico de predicción de abandono y retención selectiva de clientes"
+requires-python = "==3.11.*"
+dependencies = [
+    "joblib>=1.4,<2",
+    "jupyter>=1.1,<2",
+    "matplotlib>=3.9,<4",
+    "numpy>=2.0,<3",
+    "pandas>=2.2,<3",
+    "plotly>=5.24,<7",
+    "pytest>=8,<10",
+    "scikit-learn>=1.5,<2",
+    "streamlit>=1.40,<2",
+    "tensorflow==2.21.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

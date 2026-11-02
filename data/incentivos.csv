@@ -1,0 +1,5 @@
+incentivo_id,nombre,costo_anual_usd,efectividad,margen_minimo_usd,perfil_requerido,percentil_transacciones_minimo,percentil_comision_minimo,percentil_balance_minimo,percentil_volumen_minimo
+1,Bonificación transaccional,20,0.20,0,Transaccional,0.50,0,0,0
+2,Exoneración de comisiones,50,0.40,150,Generador de comisiones,0,0.50,0,0
+3,Tasa preferencial,100,0.55,400,Preferencial,0,0,0.75,0.50
+4,Gestor personalizado,200,0.75,800,Patrimonial,0,0,0.90,0.75
