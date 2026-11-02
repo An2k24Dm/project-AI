@@ -1,19 +1,25 @@
 {
-    "method": "class_weight_prior_correction",
-    "class_weight_0": 0.6279153211338356,
-    "class_weight_1": 2.4544179523141656,
-    "artifact_id": "3a2890fbab71e9c8",
-    "features": [
-        "CreditScore",
-        "Age",
-        "Tenure",
-        "Balance",
-        "NumOfProducts",
-        "EstimatedSalary",
-        "Geography_France",
-        "Geography_Germany",
-        "Geography_Spain",
-        "HasCrCard",
-        "IsActiveMember"
-    ]
+  "method": "class_weight_prior_correction",
+  "class_weight_0": 0.628027992104791,
+  "class_weight_1": 2.452697967764541,
+  "artifact_id": "9d8ff84b7ef5921f",
+  "features": [
+    "CreditScore",
+    "Age",
+    "Tenure",
+    "Balance",
+    "NumOfProducts",
+    "EstimatedSalary",
+    "Geography_France",
+    "Geography_Germany",
+    "Geography_Spain",
+    "HasCrCard",
+    "IsActiveMember"
+  ],
+  "validation": {
+    "raw_brier": 0.1532084196805954,
+    "adjusted_brier": 0.10541899502277374,
+    "raw_log_loss": 0.4661193788051605,
+    "adjusted_log_loss": 0.3436707854270935
+  }
 }
