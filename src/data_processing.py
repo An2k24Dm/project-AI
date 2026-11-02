@@ -7,13 +7,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.constants import CATALOG_PATH, CLIENTS_PATH, FEATURES
 from src.financial import validar_catalogo
-from src.prediction import FEATURES
-
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-CLIENTS_PATH = PROJECT_ROOT / "data" / "processed" / "clientes_limpios.csv"
-CATALOG_PATH = PROJECT_ROOT / "data" / "incentivos.csv"
 
 APP_REQUIRED_COLUMNS = {
     "CustomerId",

@@ -261,8 +261,6 @@ def seleccionar_incentivo(
     catalogo: pd.DataFrame,
     cliente: pd.Series | Mapping[str, object] | None = None,
     umbrales: Mapping[str, Mapping[float, float]] | None = None,
-    *,
-    _catalogo_validado: bool = False,
 ) -> dict[str, object]:
     """Selecciona la alternativa elegible con mayor GNE estrictamente positiva.
 
@@ -274,8 +272,29 @@ def seleccionar_incentivo(
     annual_margin = _finite_float(margen, "El margen neto anual")
     if not 0 <= probability <= 1:
         raise ValueError("La probabilidad de fuga debe estar entre 0 y 1.")
+    return _seleccionar_incentivo_validado(
+        probability,
+        annual_margin,
+        validar_catalogo(catalogo),
+        cliente,
+        umbrales,
+    )
 
-    validated_catalog = catalogo if _catalogo_validado else validar_catalogo(catalogo)
+
+def _seleccionar_incentivo_validado(
+    probabilidad: float,
+    margen: float,
+    catalogo_validado: pd.DataFrame,
+    cliente: pd.Series | Mapping[str, object] | None,
+    umbrales: Mapping[str, Mapping[float, float]] | None,
+) -> dict[str, object]:
+    """Selecciona sobre un catálogo validado una sola vez por operación."""
+
+    probability = _finite_float(probabilidad, "La probabilidad de fuga")
+    annual_margin = _finite_float(margen, "El margen neto anual")
+    if not 0 <= probability <= 1:
+        raise ValueError("La probabilidad de fuga debe estar entre 0 y 1.")
+
     if annual_margin <= 0:
         return _base_result(
             probability,
@@ -291,7 +310,7 @@ def seleccionar_incentivo(
 
     alternatives: list[dict[str, object]] = []
     candidates: list[dict[str, object]] = []
-    for _, incentive in validated_catalog.iterrows():
+    for _, incentive in catalogo_validado.iterrows():
         cost = float(incentive["costo_anual_usd"])
         effectiveness = float(incentive["efectividad"])
         minimum_margin = float(incentive["margen_minimo_usd"])
@@ -394,13 +413,12 @@ def evaluar_cartera(
 
     records: list[dict[str, object]] = []
     for position, (_, client) in enumerate(clientes.iterrows()):
-        result = seleccionar_incentivo(
+        result = _seleccionar_incentivo_validado(
             probabilities[position],
             client["AnnualNetMargin_USD_Sim"],
             validated_catalog,
-            cliente=client,
-            umbrales=umbrales,
-            _catalogo_validado=True,
+            client,
+            umbrales,
         )
         records.append(
             {

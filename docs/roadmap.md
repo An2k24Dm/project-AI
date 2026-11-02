@@ -117,13 +117,13 @@ La documentación técnica, el EDA, el preprocesamiento, el MLP, su evaluación,
 
 **Actividades:** implementar navegación; cargar recursos con caché; crear consulta por `CustomerId`; representar indicadores y gráficos; construir controles de simulación; manejar errores y estado de sesión.
 
-**Entregables:** `app.py` y vistas funcionales conectadas a contratos simulados o componentes disponibles.
+**Entregables:** `app.py`, módulos de `ui/` y vistas funcionales conectadas a los contratos reales de inferencia y finanzas.
 
 **Criterios de finalización:** tres secciones utilizables, datos simulados identificados, ningún entrenamiento al iniciar y simulaciones sin escritura en CSV.
 
 **Dependencias:** arquitectura y contratos definidos; idealmente fases 6 y 7 disponibles para integración real.
 
-**Estado: completada.** El buscador, el panel y el simulador consumen los artefactos y módulos reales sin reentrenamiento ni escritura en los CSV.
+**Estado: completada.** El buscador, el panel y el simulador están separados por responsabilidad, consumen los artefactos reales con carga diferida y no reentrenan ni escriben en los CSV.
 
 ## 9. Integración
 
@@ -131,7 +131,7 @@ La documentación técnica, el EDA, el preprocesamiento, el MLP, su evaluación,
 
 **Actividades:** organizar recursos finales; ejecutar inferencia individual y por lotes; conectar decisiones y agregados; verificar rutas relativas; comprobar consistencia entre vistas.
 
-**Entregables:** aplicación integrada y configuración reproducible con `pyproject.toml`, `uv.lock` y `.python-version`.
+**Entregables:** aplicación integrada y configuración reproducible con `pyproject.toml`, `uv.lock`, `requirements.txt` generado y `.python-version`.
 
 **Criterios de finalización:** mismo cliente produce igual probabilidad en flujos individual y agregado, indicadores usan definiciones centrales y no hay descarga externa obligatoria al iniciar.
 
@@ -151,7 +151,7 @@ La documentación técnica, el EDA, el preprocesamiento, el MLP, su evaluación,
 
 **Dependencias:** sistema integrado y entorno bloqueado.
 
-**Estado: completada.** La suite verifica 44 casos y la aplicación inicia mediante el comando oficial con respuesta de salud correcta.
+**Estado: completada.** La suite verifica 55 casos, incluidas interacciones reales de las tres vistas, y la aplicación inicia mediante el comando oficial.
 
 ## 11. Elaboración del informe ejecutivo
 
@@ -173,4 +173,4 @@ La documentación técnica, el EDA, el preprocesamiento, el MLP, su evaluación,
 
 ## Próximo paso
 
-La solución técnica está integrada: predicción, filtro de rentabilidad, catálogo de acciones, interfaz y simulación. La suite actual verifica 44 casos y la cartera consolidada no asigna gastos a clientes deficitarios. El próximo paso es elaborar el informe ejecutivo y preparar la demostración, sin presentar las proyecciones académicas como beneficios observados.
+La solución técnica está integrada y modularizada: predicción, filtro de rentabilidad, catálogo de acciones, interfaz y simulación. La suite actual verifica 55 casos y la cartera consolidada no asigna gastos a clientes deficitarios. El próximo paso es elaborar el informe ejecutivo y preparar la demostración, sin presentar las proyecciones académicas como beneficios observados.

@@ -33,7 +33,7 @@ donde \(P_f\) es la probabilidad de fuga, \(E_i\) la efectividad estimada del in
 | MLP de abandono | Completado | Modelo evaluado y exportado; inferencia individual y por lotes mediante `PredictorFuga`. |
 | Motor financiero | Completado | Elegibilidad comercial, GNE, desempate determinista y agregados de cartera verificados. |
 | Aplicación Streamlit | Completada | Buscador individual, panel ejecutivo y simulador temporal. |
-| Pruebas automatizadas | Implementadas | 44 pruebas Pytest para datos, predicción, finanzas, analítica, escenarios e inicio de Streamlit. |
+| Pruebas automatizadas | Implementadas | 55 pruebas Pytest para datos, predicción, finanzas, analítica, caché e interacciones reales de Streamlit. |
 
 ## Tecnologías definidas
 
@@ -56,17 +56,18 @@ Python 3.11, Scikit-learn 1.9.1 y TensorFlow 2.21.0 están fijados por el entorn
 
 ## Arquitectura resumida
 
-La solución es un monolito organizado por responsabilidades funcionales:
+La solución es un monolito modular organizado por responsabilidades:
 
-- `app.py`: interfaz Streamlit.
-- `src/data_processing.py`: lectura, validación y preparación de datos.
+- `app.py`: configuración, navegación y coordinación general.
+- `ui/pages/`: presentación independiente del buscador, panel y simulador.
+- `ui/components.py` y `ui/styles.py`: componentes visuales y diseño compartido.
+- `ui/services.py`: carga diferida, caché, inferencia y construcción de escenarios.
+- `src/data_processing.py`: lectura y validación de datos.
 - `src/prediction.py`: carga de artefactos e inferencia.
 - `src/financial.py`: elegibilidad, incentivos y cálculos económicos.
-- `src/analytics.py`: indicadores agregados del dashboard.
-- `training/train.py`: entrenamiento reproducible del MLP.
-- `training/evaluate.py`: evaluación, calibración y explicabilidad.
+- `src/analytics.py`: indicadores, filtros y comparación de escenarios.
 
-Streamlit leerá los datos locales, utilizará el preprocesador y el modelo ya exportados y pasará las probabilidades al motor financiero. El inicio de la aplicación nunca entrenará el modelo.
+El entrenamiento y la evaluación reproducibles permanecen en los notebooks 2 y 3. Streamlit solo consume los artefactos exportados; nunca entrena el modelo.
 
 La explicación completa se encuentra en [Arquitectura](docs/architecture.md).
 
@@ -92,14 +93,24 @@ project-AI/
 │   ├── 03_red_neuronal.ipynb
 │   └── 04_analisis_financiero.ipynb
 ├── app.py
+├── .streamlit/
+│   └── config.toml
+├── ui/
+│   ├── __init__.py
+│   ├── components.py
+│   ├── services.py
+│   ├── styles.py
+│   └── pages/
+│       ├── __init__.py
+│       ├── buscador.py
+│       ├── dashboard.py
+│       └── simulador.py
 ├── src/
+│   ├── constants.py
 │   ├── data_processing.py
 │   ├── prediction.py
 │   ├── financial.py
 │   └── analytics.py
-├── training/
-│   ├── train.py
-│   └── evaluate.py
 ├── data/
 │   ├── Deep_Retention_Dataset.csv
 │   ├── processed/
@@ -119,6 +130,7 @@ project-AI/
 │   └── test_application.py
 ├── pyproject.toml
 ├── uv.lock
+├── requirements.txt
 ├── .python-version
 └── .gitignore
 ```
@@ -127,7 +139,7 @@ La aplicación consume únicamente recursos versionados del repositorio y mantie
 
 ## Requisitos de ejecución
 
-Cuando la implementación esté terminada, el profesor solo necesitará:
+Para ejecutar la aplicación se necesita:
 
 - Git para clonar o descargar el proyecto.
 - `uv` instalado.
@@ -154,6 +166,7 @@ uv --version
 Desde la raíz del repositorio:
 
 ```bash
+uv sync --locked
 uv run streamlit run app.py
 ```
 
@@ -173,15 +186,21 @@ Las pruebas automatizadas se ejecutan desde la raíz con:
 uv run pytest -q
 ```
 
+`requirements.txt` se genera desde `uv.lock`; no se mantiene manualmente:
+
+```bash
+uv export --format requirements-txt --no-hashes --locked --output-file requirements.txt
+```
+
 ## Flujo de la aplicación
 
-1. La aplicación carga el dataset, el catálogo de incentivos, el preprocesador y el modelo exportado.
-2. El usuario busca un cliente o consulta la cartera.
-3. Se seleccionan exclusivamente las nueve características aprobadas para inferencia.
-4. El preprocesador aplica exactamente las transformaciones aprendidas durante el entrenamiento.
-5. El MLP devuelve una probabilidad de abandono; nunca se presenta `Exited` como predicción.
-6. El motor financiero evalúa los incentivos elegibles, descarta GNE menores o iguales a cero y evita intervenir clientes deficitarios.
-7. Streamlit muestra la recomendación o permite simular supuestos sin sobrescribir los CSV.
+1. El inicio valida datos, catálogo y metadatos de los cinco recursos versionados sin cargar el MLP.
+2. El buscador carga el predictor solo al solicitar un cliente; el panel y el simulador construyen la cartera completa bajo demanda.
+3. Se seleccionan exclusivamente las nueve características aprobadas y el preprocesador aplica las transformaciones aprendidas.
+4. El MLP devuelve una probabilidad de abandono; `Exited` nunca se usa como entrada ni como sustituto de la predicción.
+5. El motor financiero evalúa los incentivos elegibles, descarta `GNE <= 0` y evita intervenir clientes deficitarios.
+6. Los filtros solo crean subconjuntos de decisiones existentes.
+7. El simulador reutiliza probabilidades y percentiles, y modifica supuestos únicamente en memoria.
 
 ## Documentación
 

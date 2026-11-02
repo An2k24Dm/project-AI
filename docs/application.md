@@ -4,7 +4,7 @@
 
 ## Estado
 
-La aplicación está implementada en [`app.py`](../app.py) y se ejecuta con los artefactos ya exportados. Es una capa de presentación y coordinación: no entrena el MLP, no ajusta el preprocesador y no escribe sobre los CSV.
+La aplicación se inicia desde [`app.py`](../app.py), pero su presentación está dividida en `ui/pages/`, sus elementos compartidos en `ui/components.py` y `ui/styles.py`, y la coordinación con negocio en `ui/services.py`. No entrena el MLP, no ajusta el preprocesador y no escribe sobre los CSV.
 
 ```bash
 uv run streamlit run app.py
@@ -34,7 +34,7 @@ La consulta acepta un `CustomerId`, comprueba que exista una sola fila y muestra
 - incentivo, costo, GNE y explicación de la decisión;
 - detalle auditable de todas las alternativas evaluadas.
 
-El nivel de riesgo es descriptivo. No autoriza por sí solo un incentivo: la recomendación utiliza elegibilidad comercial, margen y GNE. Un identificador inválido o inexistente genera un mensaje comprensible y no una recomendación parcial.
+El nivel de riesgo es descriptivo. No autoriza por sí solo un incentivo: la recomendación utiliza elegibilidad comercial, margen y GNE. Un identificador inválido o inexistente genera un mensaje comprensible y no una recomendación parcial. La pantalla inicial no carga TensorFlow ni el MLP: la inferencia individual comienza al pulsar **Buscar cliente** y utiliza los percentiles de la cartera completa.
 
 ## Panel de cartera
 
@@ -72,7 +72,15 @@ models/modelo_churn.keras
 models/correccion_probabilidades.json
 ```
 
-Se utiliza `st.cache_resource` para el predictor y `st.cache_data` para datos, probabilidades, cartera base y escenarios. Una huella de los CSV invalida la caché cuando cambia una fuente. Los parámetros editables permanecen en `session_state`.
+Se utiliza `st.cache_resource` para una instancia del predictor por versión y `st.cache_data` para datos, percentiles, probabilidades, cartera base, consultas individuales y escenarios. La clave de versión incorpora tamaño y fecha de modificación de:
+
+- `clientes_limpios.csv`;
+- `incentivos.csv`;
+- `modelo_churn.keras`;
+- `preprocesador.joblib`;
+- `correccion_probabilidades.json`.
+
+Así se invalidan los resultados afectados sin calcular repetidamente el hash de archivos grandes. Los parámetros editables permanecen en `session_state` y el restablecimiento recupera el catálogo base.
 
 ## Tratamiento de errores
 
@@ -92,4 +100,9 @@ Los costos, las efectividades y las variables financieras con sufijo `_Sim` son 
 
 ## Verificación
 
-La suite comprueba la búsqueda de clientes, los KPI base, la coherencia entre consulta individual y cartera, la estabilidad de decisiones al filtrar, la inmutabilidad del catálogo, escenarios límite y el inicio real de Streamlit. La aplicación también fue iniciada localmente y su endpoint de salud respondió correctamente.
+La suite contiene 55 pruebas. Comprueba búsqueda válida, inválida y las tres decisiones; KPI base; filtros individuales, combinados y vacíos; estabilidad de recomendaciones; cambios de costo y efectividad; inmutabilidad del catálogo; ROI sin inversión; firma de recursos; navegación real; envío del formulario y restablecimiento mediante `streamlit.testing.v1.AppTest`.
+
+La verificación visual se realizó además en un navegador real, con las tres
+vistas, búsqueda válida e inválida, panel, filtros, recálculo y restablecimiento
+del simulador. Esta revisión complementa, pero no sustituye, las pruebas de
+componentes.

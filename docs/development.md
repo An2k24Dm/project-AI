@@ -20,13 +20,16 @@ El entorno bloqueado incluye Python 3.11, Jupyter, Pandas, NumPy, Matplotlib, Pl
 
 | Archivo | Contenido permitido | Contenido que debe evitarse |
 |---|---|---|
-| `app.py` | Controles y presentación de Streamlit; coordinación de casos de uso. | Entrenamiento, transformaciones manuales o fórmulas financieras duplicadas. |
+| `app.py` | Configuración, navegación e inicialización mínima. | Gráficos, CSS extenso, estado del simulador o reglas financieras. |
+| `ui/pages/*.py` | Presentación de cada caso de uso. | Entrenamiento o duplicación de negocio. |
+| `ui/components.py` | Formatos, KPI y avisos compartidos. | Acceso a datos o artefactos. |
+| `ui/styles.py` | Paleta y CSS acotado. | Cálculos o estado de sesión. |
+| `ui/services.py` | Caché y coordinación entre datos, predictor y finanzas. | Fórmulas duplicadas o widgets. |
+| `src/constants.py` | Rutas y características compartidas. | Carga de TensorFlow o estado mutable. |
 | `src/data_processing.py` | Lectura de CSV, validación de esquema, selección de columnas. | Widgets o dependencias de presentación. |
 | `src/prediction.py` | Carga de artefactos, transformación e inferencia. | Reglas de incentivos o entrenamiento. |
 | `src/financial.py` | GNE, elegibilidad, comparación y decisión. | Código de Streamlit o acceso al modelo neuronal. |
 | `src/analytics.py` | Agregaciones y datos para gráficos/KPI. | Mutación de archivos fuente. |
-| `training/train.py` | División, ajuste del preprocesador y entrenamiento. | Inicio de Streamlit. |
-| `training/evaluate.py` | Evaluación, calibración y explicabilidad. | Reglas de interfaz. |
 
 La separación es funcional, no una invitación a crear capas, interfaces o abstracciones ceremoniales.
 
@@ -59,8 +62,9 @@ Los contratos implementados incluyen validar las nueve características, predeci
 
 Los archivos disponibles son:
 
-- `pyproject.toml`: metadatos, Python 3.11 y dependencias directas del EDA, el preprocesamiento y el entrenamiento inicial;
+- `pyproject.toml`: metadatos, Python 3.11 y dependencias directas;
 - `uv.lock`: resolución exacta y reproducible;
+- `requirements.txt`: exportación generada desde `uv.lock` para herramientas que la exigen;
 - `.python-version`: versión de Python elegida para el proyecto.
 
 Proceso para ampliar el entorno en fases futuras:
@@ -78,13 +82,17 @@ Comandos disponibles:
 
 ```bash
 uv sync --locked
-uv run python training/train.py
-uv run python training/evaluate.py
-uv run pytest
+uv run pytest -q
 uv run streamlit run app.py
 ```
 
-El profesor solo necesitará el último comando para la demostración; entrenamiento y evaluación forman parte del mantenimiento del proyecto.
+El entrenamiento y la evaluación se reproducen con los notebooks 2 y 3; no existen scripts paralelos en `training/`. Para regenerar la exportación compatible con `pip`:
+
+```bash
+uv export --format requirements-txt --no-hashes --locked --output-file requirements.txt
+```
+
+`requirements.txt` no se edita manualmente.
 
 ### Orden reproducible actual
 
@@ -106,7 +114,7 @@ El profesor solo necesitará el último comando para la demostración; entrenami
 
 ## Pruebas con Pytest
 
-La suite implementada contiene 44 pruebas para carga de datos, predicción, compatibilidad de artefactos, entradas inválidas, catálogo, GNE, elegibilidad, desempates, agregados, filtros, simulación e inicio de Streamlit. Se ejecuta con `uv run pytest -q`.
+La suite implementada contiene 55 pruebas para carga de datos, predicción, compatibilidad de artefactos, entradas inválidas, catálogo, GNE, elegibilidad, desempates, agregados, filtros, caché, simulación e interacciones de Streamlit. Se ejecuta con `uv run pytest -q`.
 
 ### Matriz mínima
 
@@ -140,7 +148,7 @@ Las pruebas de integración cubren:
 - carga de los artefactos reales distribuidos.
 - búsqueda individual coherente con la decisión almacenada en la cartera;
 - escenarios temporales que no mutan el catálogo original;
-- inicio de `app.py` mediante las herramientas de prueba de Streamlit.
+- navegación, búsqueda, filtros, envío y restablecimiento del simulador mediante `AppTest`.
 
 Los resultados del conjunto de prueba del modelo no deben convertirse en asserts frágiles de igualdad exacta; se validarán contratos y tolerancias justificadas.
 

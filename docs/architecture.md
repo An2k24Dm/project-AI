@@ -4,7 +4,7 @@
 
 ## Estado del documento
 
-La arquitectura completa está implementada. `src/prediction.py` carga los tres artefactos compatibles, `src/financial.py` aplica elegibilidad y GNE, `src/analytics.py` prepara indicadores y filtros, y `app.py` coordina las tres vistas de Streamlit.
+La arquitectura completa está implementada y separa presentación, coordinación y negocio. `app.py` solo configura Streamlit y dirige la navegación; `ui/` contiene páginas, componentes, estilos y servicios; `src/` conserva datos, inferencia, analítica y reglas financieras.
 
 ## Estilo arquitectónico
 
@@ -25,28 +25,35 @@ Esta decisión reduce la preparación necesaria para la demostración y mantiene
 
 | Componente | Responsabilidad | Dependencias principales |
 |---|---|---|
-| `app.py` | Navegación, entrada del usuario y presentación en Streamlit. | Módulos de `src/`; no contiene entrenamiento. |
+| `app.py` | Configuración, navegación, inicialización mínima y errores generales. | Módulos de `ui/`; no contiene gráficos ni negocio. |
+| `ui/pages/buscador.py` | Consulta diferida y presentación individual. | Servicios y componentes compartidos. |
+| `ui/pages/dashboard.py` | Filtros, KPI, gráficos y tabla de oportunidades. | `src.analytics`; no recalcula decisiones. |
+| `ui/pages/simulador.py` | Estado de sesión, formulario y comparación de escenarios. | Servicios y componentes compartidos. |
+| `ui/components.py` | Formatos, KPI y avisos reutilizables. | Streamlit. |
+| `ui/styles.py` | Paleta y CSS limitado a elementos no cubiertos por el tema. | Streamlit y `.streamlit/config.toml`. |
+| `ui/services.py` | Firma de recursos, caché, carga diferida, inferencia y escenarios. | Funciones existentes de `src/`. |
+| `src/constants.py` | Rutas y características comunes sin importar TensorFlow. | `pathlib`. |
 | `src/data_processing.py` | Lectura de CSV, validación de esquema y preparación de entradas. | Pandas, preprocesador exportado cuando corresponda. |
 | `src/prediction.py` | Carga y valida preprocesador, MLP y corrección; predicción individual y por lotes. | TensorFlow/Keras, Joblib. |
 | `src/financial.py` | Catálogo, percentiles comerciales, GNE, selección, cartera y agregados. | Pandas, datos financieros y catálogo. |
 | `src/analytics.py` | Agregados de cartera, ROI y datos para visualizaciones. | Predicciones y decisiones financieras. |
-| `training/train.py` | División de datos, ajuste del preprocesador y entrenamiento del MLP. | Pandas, Scikit-learn, TensorFlow/Keras. |
-| `training/evaluate.py` | Métricas, calibración, explicabilidad y evaluación final. | Modelo, preprocesador y conjunto de prueba. |
 | Archivos CSV | Fuente local de clientes e incentivos. | Sin servidor de base de datos. |
-| Artefactos en `models/` | Modelo y preprocesador versionados para inferencia. | Cargados al iniciar Streamlit, nunca reentrenados allí. |
+| Artefactos en `models/` | Modelo, preprocesador y corrección versionados. | Cargados bajo demanda, nunca reentrenados en Streamlit. |
 
 ## Diagrama de arquitectura
 
 ```mermaid
 flowchart LR
-    U[Usuario] --> UI[app.py / Streamlit]
+    U[Usuario] --> APP[app.py / navegación]
 
     subgraph MON[Monolito Python]
-        UI --> DP[src/data_processing.py]
-        UI --> PR[src/prediction.py]
-        UI --> FN[src/financial.py]
-        UI --> AN[src/analytics.py]
-        DP --> PR
+        APP --> PAGES[ui/pages]
+        PAGES --> SVC[ui/services.py]
+        PAGES --> CMP[ui/components.py]
+        SVC --> DP[src/data_processing.py]
+        SVC --> PR[src/prediction.py]
+        SVC --> FN[src/financial.py]
+        SVC --> AN[src/analytics.py]
         PR --> FN
         FN --> AN
     end
@@ -56,15 +63,15 @@ flowchart LR
     PP[(preprocesador.joblib)] --> PR
     NN[(modelo_churn.keras)] --> PR
     CP[(correccion_probabilidades.json)] --> PR
-    AN --> UI
+    AN --> PAGES
 
     subgraph OFF[Flujo de entrenamiento fuera de Streamlit]
-        TR[training/train.py] --> PP
-        TR --> NN
-        EV[training/evaluate.py] --> NN
+        PRE[02_preprocesamiento.ipynb] --> PP
+        RED[03_red_neuronal.ipynb] --> NN
+        RED --> CP
     end
-    DC --> TR
-    DC --> EV
+    DC --> PRE
+    PRE --> RED
 ```
 
 Las flechas desde entrenamiento hacia los artefactos representan un proceso separado de la aplicación. La aplicación solo consume artefactos ya generados.
@@ -74,24 +81,25 @@ Las flechas desde entrenamiento hacia los artefactos representan un proceso sepa
 ```mermaid
 sequenceDiagram
     actor Usuario
-    participant UI as Streamlit
-    participant Datos as data_processing
+    participant UI as ui/pages/buscador
+    participant Servicios as ui/services
     participant Pred as prediction
     participant Prep as preprocesador.joblib
     participant MLP as modelo_churn.keras
     participant Finanzas as financial
 
     Usuario->>UI: Ingresa CustomerId
-    UI->>Datos: Solicita el registro validado
-    Datos-->>UI: Datos bancarios y financieros
-    UI->>Pred: Solicita probabilidad
+    UI->>Servicios: Solicita CustomerId
+    Servicios->>Servicios: Recupera datos y percentiles en caché
+    Servicios->>Pred: Solicita probabilidad individual
     Pred->>Prep: Transforma 9 características
     Prep-->>Pred: Vector transformado
     Pred->>MLP: Ejecuta inferencia
     MLP-->>Pred: Probabilidad de abandono [0, 1]
-    Pred-->>UI: Probabilidad con corrección aproximada
-    UI->>Finanzas: Evalúa incentivos elegibles
-    Finanzas-->>UI: Mejor GNE positiva o no intervención
+    Pred-->>Servicios: Probabilidad con corrección aproximada
+    Servicios->>Finanzas: Evalúa incentivos elegibles
+    Finanzas-->>Servicios: Mejor GNE positiva o no intervención
+    Servicios-->>UI: Perfil y decisión trazable
     UI-->>Usuario: Riesgo, margen y decisión
 ```
 
@@ -127,7 +135,9 @@ La aplicación tratará estos archivos como entradas de solo lectura. Las simula
 
 ## Inicio y ciclo de vida
 
-Al iniciar, Streamlit valida clientes, incentivos, preprocesador, modelo y metadatos de corrección. El predictor se conserva con `st.cache_resource`; los datos, probabilidades y escenarios usan `st.cache_data`. Un fallo produce un mensaje comprensible y detiene la aplicación sin presentar resultados parciales como válidos.
+Al iniciar, Streamlit valida la presencia y metadatos de clientes, catálogo y artefactos, pero solo carga los CSV. La firma de versión combina nombre, tamaño y fecha de modificación en nanosegundos de los cinco recursos. Un cambio normal en cualquiera de ellos crea una clave de caché nueva.
+
+El predictor se crea con `st.cache_resource` al buscar un cliente o abrir una vista de cartera. Los datos, percentiles, probabilidades, escenario base y escenarios simulados usan `st.cache_data`. El panel ejecuta la inferencia por lotes una sola vez por versión; el simulador reutiliza esas probabilidades y los percentiles originales.
 
 La ejecución oficial es:
 
