@@ -261,6 +261,8 @@ def seleccionar_incentivo(
     catalogo: pd.DataFrame,
     cliente: pd.Series | Mapping[str, object] | None = None,
     umbrales: Mapping[str, Mapping[float, float]] | None = None,
+    *,
+    _catalogo_validado: bool = False,
 ) -> dict[str, object]:
     """Selecciona la alternativa elegible con mayor GNE estrictamente positiva.
 
@@ -273,7 +275,7 @@ def seleccionar_incentivo(
     if not 0 <= probability <= 1:
         raise ValueError("La probabilidad de fuga debe estar entre 0 y 1.")
 
-    validated_catalog = validar_catalogo(catalogo)
+    validated_catalog = catalogo if _catalogo_validado else validar_catalogo(catalogo)
     if annual_margin <= 0:
         return _base_result(
             probability,
@@ -398,6 +400,7 @@ def evaluar_cartera(
             validated_catalog,
             cliente=client,
             umbrales=umbrales,
+            _catalogo_validado=True,
         )
         records.append(
             {

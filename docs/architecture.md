@@ -4,11 +4,11 @@
 
 ## Estado del documento
 
-La arquitectura de inferencia y finanzas ya está implementada: `src/prediction.py` carga los tres artefactos compatibles y `src/financial.py` aplica elegibilidad, GNE y agregados. Streamlit sigue planificado y no se implementa en esta fase.
+La arquitectura completa está implementada. `src/prediction.py` carga los tres artefactos compatibles, `src/financial.py` aplica elegibilidad y GNE, `src/analytics.py` prepara indicadores y filtros, y `app.py` coordina las tres vistas de Streamlit.
 
 ## Estilo arquitectónico
 
-Deep Retention será un monolito Python sencillo, desplegable y ejecutable como una única aplicación Streamlit. La organización será modular por responsabilidad funcional, sin capas ceremoniales ni patrones que no aporten valor al alcance académico.
+Deep Retention es un monolito Python sencillo, desplegable y ejecutable como una única aplicación Streamlit. La organización es modular por responsabilidad funcional, sin capas ceremoniales ni patrones que no aporten valor al alcance académico.
 
 La solución no utilizará:
 
@@ -23,7 +23,7 @@ Esta decisión reduce la preparación necesaria para la demostración y mantiene
 
 ## Componentes y responsabilidades
 
-| Componente previsto | Responsabilidad | Dependencias principales |
+| Componente | Responsabilidad | Dependencias principales |
 |---|---|---|
 | `app.py` | Navegación, entrada del usuario y presentación en Streamlit. | Módulos de `src/`; no contiene entrenamiento. |
 | `src/data_processing.py` | Lectura de CSV, validación de esquema y preparación de entradas. | Pandas, preprocesador exportado cuando corresponda. |
@@ -115,9 +115,9 @@ El resultado conserva probabilidad, margen, incentivo, perfil requerido, elegibi
 
 ## Gestión de archivos
 
-La persistencia será exclusivamente local mediante CSV y artefactos serializados:
+La persistencia es exclusivamente local mediante CSV y artefactos serializados:
 
-- El dataset actual es `data/Deep_Retention_Dataset.csv` y se trata como entrada de solo lectura.
+- El CSV original `data/Deep_Retention_Dataset.csv` se conserva como entrada de solo lectura; la aplicación consume `data/processed/clientes_limpios.csv`.
 - `data/incentivos.csv` contiene cuatro acciones y condiciones comerciales académicas verificadas.
 - `models/modelo_churn.keras` contiene la red entrenada.
 - `models/preprocesador.joblib` contiene el pipeline ajustado con entrenamiento.
@@ -127,9 +127,9 @@ La aplicación tratará estos archivos como entradas de solo lectura. Las simula
 
 ## Inicio y ciclo de vida
 
-Al iniciar, Streamlit deberá validar la existencia y compatibilidad de los cuatro recursos necesarios: clientes, incentivos, preprocesador y modelo. Los recursos inmutables podrán cargarse con caché. Un fallo debe producir un mensaje comprensible y detener únicamente la funcionalidad afectada, sin presentar resultados parciales como válidos.
+Al iniciar, Streamlit valida clientes, incentivos, preprocesador, modelo y metadatos de corrección. El predictor se conserva con `st.cache_resource`; los datos, probabilidades y escenarios usan `st.cache_data`. Un fallo produce un mensaje comprensible y detiene la aplicación sin presentar resultados parciales como válidos.
 
-La ejecución oficial prevista será:
+La ejecución oficial es:
 
 ```bash
 uv run streamlit run app.py

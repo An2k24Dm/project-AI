@@ -2,9 +2,9 @@
 
 **Sistema de Retención Selectiva de Clientes**
 
-Deep Retention es un proyecto académico de inteligencia artificial orientado a estimar la probabilidad de abandono de clientes bancarios y convertir esa estimación en decisiones de retención económicamente justificadas. La solución combinará una red neuronal profunda, un motor de rentabilidad y una aplicación interactiva en Streamlit.
+Deep Retention es un proyecto académico de inteligencia artificial orientado a estimar la probabilidad de abandono de clientes bancarios y convertir esa estimación en decisiones de retención económicamente justificadas. La solución combina una red neuronal profunda, un motor de rentabilidad y una aplicación interactiva en Streamlit.
 
-> **Estado actual:** los tres objetivos iniciales están implementados: inferencia con el MLP exportado, motor de GNE y catálogo de acciones con elegibilidad comercial. El modelo obtuvo ROC-AUC 0,8635 y Brier Score ajustado 0,0995 en prueba. La corrección de probabilidades es aproximada, no una calibración aprendida. Streamlit, el dashboard y el simulador siguen pendientes.
+> **Estado actual:** la solución integrada está implementada: inferencia con el MLP exportado, motor de GNE, catálogo de acciones y aplicación Streamlit con buscador, panel de cartera y simulador. El modelo obtuvo ROC-AUC 0,8635 y Brier Score ajustado 0,0995 en prueba. La corrección de probabilidades es aproximada, no una calibración aprendida.
 
 ## Objetivos
 
@@ -13,7 +13,7 @@ Deep Retention es un proyecto académico de inteligencia artificial orientado a 
 3. Elegir, para cada cliente elegible, la intervención con mayor GNE estrictamente positiva.
 4. Presentar resultados individuales, agregados y de simulación en una aplicación Streamlit sencilla.
 
-La regla económica central será:
+La regla económica central es:
 
 \[
 \text{GNE}=(P_f \times E_i \times M_c)-C_i
@@ -32,8 +32,8 @@ donde \(P_f\) es la probabilidad de fuga, \(E_i\) la efectividad estimada del in
 | Preprocesamiento | Completado | Limpieza, particiones estratificadas, `ColumnTransformer` y artefactos reproducibles verificados en `notebooks/02_preprocesamiento.ipynb`. |
 | MLP de abandono | Completado | Modelo evaluado y exportado; inferencia individual y por lotes mediante `PredictorFuga`. |
 | Motor financiero | Completado | Elegibilidad comercial, GNE, desempate determinista y agregados de cartera verificados. |
-| Aplicación Streamlit | Planificado | Buscador, dashboard y simulador. |
-| Pruebas automatizadas | Implementadas | 33 pruebas Pytest para predicción, catálogo, GNE, selección y agregados. |
+| Aplicación Streamlit | Completada | Buscador individual, panel ejecutivo y simulador temporal. |
+| Pruebas automatizadas | Implementadas | 44 pruebas Pytest para datos, predicción, finanzas, analítica, escenarios e inicio de Streamlit. |
 
 ## Tecnologías definidas
 
@@ -56,7 +56,7 @@ Python 3.11, Scikit-learn 1.9.1 y TensorFlow 2.21.0 están fijados por el entorn
 
 ## Arquitectura resumida
 
-La solución será un monolito organizado por responsabilidades funcionales:
+La solución es un monolito organizado por responsabilidades funcionales:
 
 - `app.py`: interfaz Streamlit.
 - `src/data_processing.py`: lectura, validación y preparación de datos.
@@ -72,7 +72,7 @@ La explicación completa se encuentra en [Arquitectura](docs/architecture.md).
 
 ## Estructura objetivo
 
-La estructura combina los entregables actuales con los componentes previstos para las siguientes fases.
+La estructura combina los entregables de análisis, entrenamiento, finanzas y aplicación:
 
 ```text
 project-AI/
@@ -115,14 +115,15 @@ project-AI/
 │   └── correccion_probabilidades.json
 ├── tests/
 │   ├── test_prediction.py
-│   └── test_financial.py
+│   ├── test_financial.py
+│   └── test_application.py
 ├── pyproject.toml
 ├── uv.lock
 ├── .python-version
 └── .gitignore
 ```
 
-No se crearán directorios vacíos ni archivos funcionales antes de que su fase correspondiente lo requiera.
+La aplicación consume únicamente recursos versionados del repositorio y mantiene las simulaciones en memoria.
 
 ## Requisitos de ejecución
 
@@ -148,7 +149,7 @@ La instalación puede comprobarse con:
 uv --version
 ```
 
-### Ejecución oficial prevista
+### Ejecución oficial
 
 Desde la raíz del repositorio:
 
@@ -156,7 +157,7 @@ Desde la raíz del repositorio:
 uv run streamlit run app.py
 ```
 
-En el estado actual este comando todavía no es funcional porque `app.py` no ha sido creado. El dataset, el catálogo, el preprocesador, el MLP y la corrección probabilística ya están disponibles y se cargan sin reentrenamiento.
+El comando inicia la aplicación con el dataset depurado, el catálogo, el preprocesador, el MLP y la corrección probabilística ya disponibles. No ejecuta entrenamiento ni modifica los CSV.
 
 ## Orden reproducible de los notebooks
 
@@ -172,7 +173,7 @@ Las pruebas automatizadas se ejecutan desde la raíz con:
 uv run pytest -q
 ```
 
-## Flujo previsto
+## Flujo de la aplicación
 
 1. La aplicación carga el dataset, el catálogo de incentivos, el preprocesador y el modelo exportado.
 2. El usuario busca un cliente o consulta la cartera.
@@ -195,4 +196,4 @@ uv run pytest -q
 
 ## Estado y próximo hito
 
-Los objetivos de predicción, rentabilidad y selección de incentivos están completados y verificados. En la evaluación consolidada se recomiendan 1.214 intervenciones, con inversión proyectada de USD 66.640,00 y GNE académica de USD 90.099,69; ninguna se asigna a clientes con margen no positivo. Estas cifras son simulaciones, no ganancias realizadas. El próximo hito es construir Streamlit sin reentrenar el modelo.
+Los objetivos de predicción, rentabilidad, selección de incentivos e interfaz interactiva están completados y verificados. En el escenario base se recomiendan 1.214 intervenciones, con inversión proyectada de USD 66.640,00 y GNE académica de USD 90.099,69; ninguna se asigna a clientes con margen no positivo. Estas cifras son simulaciones, no ganancias realizadas. El siguiente hito documental es elaborar el informe ejecutivo y preparar la demostración académica.

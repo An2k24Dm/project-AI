@@ -137,6 +137,22 @@ Para las intervenciones seleccionadas (S):
 
 Si la inversión es cero, el ROI se devuelve como no aplicable (`None`), nunca como infinito.
 
+El panel añade dos indicadores operativos sin alterar la regla de decisión:
+
+\[
+\text{Saldo expuesto}=\sum_c P_{f,c}\times Balance_c
+\]
+
+Se conserva la unidad original no declarada de `Balance`; no se presenta como USD ni como valor recuperable.
+
+\[
+\text{Abandonos esperados evitados}=\sum_{(c,i)\in S} P_{f,c}\times E_i
+\]
+
+La efectividad ponderada por riesgo divide ese último resultado entre la suma de probabilidades de los clientes intervenidos. Ambos son valores esperados bajo supuestos académicos, no abandonos observados.
+
+Los filtros del panel solo crean subconjuntos de resultados ya evaluados. Los percentiles comerciales y las decisiones no se recalculan al filtrar. El simulador sí vuelve a evaluar GNE con costos y efectividades temporales, pero reutiliza las probabilidades y los percentiles del escenario base y nunca modifica el catálogo en disco.
+
 ## Pruebas y reproducción
 
 Las pruebas cubren probabilidades límite e inválidas, márgenes no positivos, GNE negativa/cero/positiva, elegibilidad, selección óptima, empates, catálogos inválidos, bloqueo de deficitarios y consistencia de agregados:

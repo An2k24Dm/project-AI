@@ -4,7 +4,7 @@
 
 ## Estado
 
-El entorno bloqueado incluye Python 3.11, Jupyter, Pandas, NumPy, Matplotlib, Scikit-learn, Joblib, TensorFlow/Keras y Pytest. Los datos procesados, el MLP, el preprocesador y la corrección están exportados; predicción y finanzas tienen pruebas automatizadas. Streamlit todavía no está implementado.
+El entorno bloqueado incluye Python 3.11, Jupyter, Pandas, NumPy, Matplotlib, Plotly, Scikit-learn, Joblib, TensorFlow/Keras, Streamlit y Pytest. Los datos procesados, los artefactos, el motor financiero y la aplicación interactiva están implementados y cubiertos por pruebas automatizadas.
 
 ## Principios
 
@@ -18,7 +18,7 @@ El entorno bloqueado incluye Python 3.11, Jupyter, Pandas, NumPy, Matplotlib, Sc
 
 ## Organización del código
 
-| Archivo previsto | Contenido permitido | Contenido que debe evitarse |
+| Archivo | Contenido permitido | Contenido que debe evitarse |
 |---|---|---|
 | `app.py` | Controles y presentación de Streamlit; coordinación de casos de uso. | Entrenamiento, transformaciones manuales o fórmulas financieras duplicadas. |
 | `src/data_processing.py` | Lectura de CSV, validación de esquema, selección de columnas. | Widgets o dependencias de presentación. |
@@ -74,7 +74,7 @@ Proceso para ampliar el entorno en fases futuras:
 
 No se utilizarán rangos abiertos sin justificación para dependencias sensibles al formato de los artefactos. Actualizar una dependencia que serializa o carga modelos exige volver a verificar los artefactos.
 
-Comandos disponibles o previstos según la fase:
+Comandos disponibles:
 
 ```bash
 uv sync --locked
@@ -106,7 +106,7 @@ El profesor solo necesitará el último comando para la demostración; entrenami
 
 ## Pruebas con Pytest
 
-La suite implementada contiene 33 pruebas para predicción, compatibilidad de artefactos, entradas inválidas, catálogo, GNE, elegibilidad, desempates y agregados. Se ejecuta con `uv run pytest -q`.
+La suite implementada contiene 44 pruebas para carga de datos, predicción, compatibilidad de artefactos, entradas inválidas, catálogo, GNE, elegibilidad, desempates, agregados, filtros, simulación e inicio de Streamlit. Se ejecuta con `uv run pytest -q`.
 
 ### Matriz mínima
 
@@ -131,15 +131,16 @@ Las pruebas se centran en validadores, selección de características, fórmulas
 
 ### Pruebas de integración
 
-Las pruebas de integración actuales cubren:
+Las pruebas de integración cubren:
 
 - CSV → validación → preprocesador → modelo → probabilidad;
 - probabilidad + cliente + catálogo → recomendación;
 - equivalencia entre predicción individual y por lotes;
 - decisiones de una muestra de cartera → agregados coherentes;
 - carga de los artefactos reales distribuidos.
-
-El inicio de Streamlit y sus vistas permanece pendiente hasta implementar `app.py`.
+- búsqueda individual coherente con la decisión almacenada en la cartera;
+- escenarios temporales que no mutan el catálogo original;
+- inicio de `app.py` mediante las herramientas de prueba de Streamlit.
 
 Los resultados del conjunto de prueba del modelo no deben convertirse en asserts frágiles de igualdad exacta; se validarán contratos y tolerancias justificadas.
 

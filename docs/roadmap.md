@@ -9,7 +9,7 @@
 | Completada | Los entregables y criterios indicados fueron verificados. |
 | Pendiente | La fase todavía no comenzó o no cumple todos sus criterios. |
 
-La documentación, el EDA, el preprocesamiento, el MLP, su evaluación, la exportación y el motor financiero están completados. La corrección probabilística actual es aproximada. Streamlit, el dashboard y el simulador todavía no existen.
+La documentación técnica, el EDA, el preprocesamiento, el MLP, su evaluación, la exportación, el motor financiero, Streamlit y la integración están completados. La corrección probabilística actual es aproximada. Permanece pendiente el informe ejecutivo final.
 
 ## Resumen
 
@@ -22,9 +22,9 @@ La documentación, el EDA, el preprocesamiento, el MLP, su evaluación, la expor
 | 5. Evaluación y corrección probabilística | Completada | Modelo candidato entrenado. |
 | 6. Exportación del modelo | Completada | Modelo y evaluación aprobados. |
 | 7. Motor financiero | Completada | Catálogo y artefactos disponibles. |
-| 8. Construcción de Streamlit | Pendiente | Contratos de inferencia y finanzas definidos. |
-| 9. Integración | Pendiente | Componentes y artefactos disponibles. |
-| 10. Pruebas finales | Pendiente | Sistema integrado. |
+| 8. Construcción de Streamlit | Completada | Contratos de inferencia y finanzas definidos. |
+| 9. Integración | Completada | Componentes y artefactos disponibles. |
+| 10. Pruebas finales | Completada | Sistema integrado. |
 | 11. Informe ejecutivo | Pendiente | Resultados finales verificados. |
 
 ## 1. Documentación inicial
@@ -123,6 +123,8 @@ La documentación, el EDA, el preprocesamiento, el MLP, su evaluación, la expor
 
 **Dependencias:** arquitectura y contratos definidos; idealmente fases 6 y 7 disponibles para integración real.
 
+**Estado: completada.** El buscador, el panel y el simulador consumen los artefactos y módulos reales sin reentrenamiento ni escritura en los CSV.
+
 ## 9. Integración
 
 **Objetivo:** conectar datos, artefactos, motor y presentación de extremo a extremo.
@@ -135,6 +137,8 @@ La documentación, el EDA, el preprocesamiento, el MLP, su evaluación, la expor
 
 **Dependencias:** fases 6, 7 y 8.
 
+**Estado: completada.** La inferencia por lotes, las decisiones financieras, los indicadores y las tres vistas comparten una cartera base coherente.
+
 ## 10. Pruebas finales
 
 **Objetivo:** verificar calidad funcional, reproducibilidad y facilidad de entrega.
@@ -146,6 +150,8 @@ La documentación, el EDA, el preprocesamiento, el MLP, su evaluación, la expor
 **Criterios de finalización:** pruebas aprobadas, inicio mediante `uv run streamlit run app.py`, sin preparación manual adicional y sin defectos críticos conocidos.
 
 **Dependencias:** sistema integrado y entorno bloqueado.
+
+**Estado: completada.** La suite verifica 44 casos y la aplicación inicia mediante el comando oficial con respuesta de salud correcta.
 
 ## 11. Elaboración del informe ejecutivo
 
@@ -167,4 +173,4 @@ La documentación, el EDA, el preprocesamiento, el MLP, su evaluación, la expor
 
 ## Próximo paso
 
-Los tres objetivos iniciales están completados: predicción, filtro de rentabilidad y catálogo de acciones. La suite actual verifica 33 casos y la cartera consolidada no asigna gastos a clientes deficitarios. El próximo paso es la fase 8, construcción de Streamlit, que deberá consumir los artefactos y módulos existentes sin reentrenar.
+La solución técnica está integrada: predicción, filtro de rentabilidad, catálogo de acciones, interfaz y simulación. La suite actual verifica 44 casos y la cartera consolidada no asigna gastos a clientes deficitarios. El próximo paso es elaborar el informe ejecutivo y preparar la demostración, sin presentar las proyecciones académicas como beneficios observados.
