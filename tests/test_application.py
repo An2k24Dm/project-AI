@@ -13,6 +13,7 @@ from src.analytics import (
     enriquecer_resultados,
     filtrar_cartera,
 )
+from src.constants import CLIENTS_PATH
 from src.data_processing import (
     ClienteNoEncontradoError,
     buscar_cliente,
@@ -59,11 +60,17 @@ def test_existing_and_missing_client_queries(app_state) -> None:
 def test_base_dashboard_matches_verified_financial_results(app_state) -> None:
     indicators = app_state[5]
     assert indicators["clientes_analizados"] == 10_000
-    assert indicators["clientes_retener"] == 1_214
-    assert indicators["clientes_no_intervencion"] == 5_184
-    assert indicators["clientes_salida_permitida"] == 3_602
-    assert math.isclose(indicators["inversion_total_usd"], 66_640.0)
-    assert math.isclose(indicators["gne_total_usd"], 90_099.68581665923)
+    assert indicators["clientes_rentables"] == 7_880
+    assert indicators["clientes_deficitarios"] == 2_120
+    assert indicators["clientes_retener"] == 793
+    assert indicators["clientes_no_intervencion"] == 7_087
+    assert indicators["clientes_salida_permitida"] == 2_120
+    assert math.isclose(indicators["inversion_total_usd"], 35_600.0)
+    assert math.isclose(indicators["gne_total_usd"], 42_180.78140083612)
+    assert math.isclose(
+        indicators["beneficio_bruto_esperado_usd"],
+        indicators["inversion_total_usd"] + indicators["gne_total_usd"],
+    )
     assert indicators["saldo_expuesto_unidades_originales"] > 0
     assert indicators["abandonos_esperados_evitados"] > 0
     assert 0 <= indicators["efectividad_ponderada_riesgo"] <= 1
@@ -217,7 +224,7 @@ def test_cached_simulation_changes_scenario_only(
 
 def test_resource_version_tracks_all_required_artifacts(tmp_path) -> None:
     assert {path.name for path in RESOURCE_PATHS} == {
-        "clientes_limpios.csv",
+        "clientes_financieros_simulados.csv",
         "incentivos.csv",
         "modelo_churn.keras",
         "preprocesador.joblib",
@@ -250,6 +257,22 @@ def test_missing_application_data_is_rejected(tmp_path) -> None:
         cargar_clientes(tmp_path / "missing.csv")
 
 
+def test_application_uses_complete_financial_source(app_state) -> None:
+    assert CLIENTS_PATH.name == "clientes_financieros_simulados.csv"
+    required = {
+        "MonthlyTransactions_Sim",
+        "MonthlyTransactionVolume_USD_Sim",
+        "AvgTransactionFee_USD_Sim",
+        "AnnualCommissionIncome_USD_Sim",
+        "AnnualFinancialMargin_USD_Sim",
+        "AnnualOperatingCosts_USD_Sim",
+        "AnnualNetMargin_USD_Sim",
+        "ProfitabilitySegment_Sim",
+    }
+    assert required <= set(app_state[0].columns)
+    assert app_state[0]["CustomerId"].is_unique
+
+
 def test_streamlit_application_interactions() -> None:
     app_path = Path(__file__).resolve().parents[1] / "app.py"
     app = AppTest.from_file(app_path, default_timeout=120).run(timeout=120)
@@ -261,12 +284,18 @@ def test_streamlit_application_interactions() -> None:
     app.run(timeout=120)
     assert not app.exception
     assert {item.value for item in app.subheader} >= {
-        "Información general",
-        "Predicción de abandono",
-        "Decisión comercial",
+        "A. Identificación y perfil bancario",
+        "B. Predicción del modelo neuronal",
+        "C. Información financiera simulada",
+        "D. Decisión comercial recomendada",
     }
     metric_labels = {metric.label for metric in app.metric}
-    assert {"Probabilidad ajustada", "Costo anual", "GNE seleccionada"} <= metric_labels
+    assert {
+        "Puntaje MLP (probabilidad)",
+        "Costo anual",
+        "Beneficio bruto esperado",
+        "GNE seleccionada",
+    } <= metric_labels
 
     app.text_input[0].set_value("identificador-inválido")
     app.run(timeout=120)
@@ -287,15 +316,17 @@ def test_streamlit_application_interactions() -> None:
     app.sidebar.radio[0].set_value("Simulador")
     app.run(timeout=120)
     assert not app.exception
+    base_investment = app.metric[6].value
     app.number_input[0].set_value(30.0)
     app.get("form_submit_button")[0].click()
     app.run(timeout=120)
     assert not app.exception
     assert app.number_input[0].value == 30.0
-    assert app.metric[1].value == "1,041"
+    assert app.metric[6].value != base_investment
 
     app.button[0].click()
     app.run(timeout=120)
     assert not app.exception
     assert app.number_input[0].value == 20.0
-    assert app.metric[1].value == "1,214"
+    assert app.metric[3].value == "793"
+    assert app.metric[6].value == base_investment

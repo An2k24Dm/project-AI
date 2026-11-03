@@ -4,101 +4,99 @@
 
 ## Estado y alcance
 
-El EDA fue ejecutado completamente sobre `data/Deep_Retention_Dataset.csv` mediante el entorno reproducible definido en `uv.lock`.
+`01_eda.ipynb` analiza `data/Customer-Churn-Records.csv` sin modificarlo. El archivo guardado contiene 21 celdas: 14 Markdown y 7 de código, todas estas con conteos de ejecución `1–7`, sin salidas de error y con cuatro figuras.
 
-```text
-SHA-256: 92269A89D774DFD9065F9B8D04A05E7EA647DA289C1A4A83A7893EA50A1ADC3E
-```
+El EDA cubre calidad, desbalance, descripción de predictoras, valores atípicos, variables adicionales, riesgo de fuga y correlaciones. No limpia datos, ajusta transformadores, entrena modelos ni estudia las variables financieras simuladas, que se crean posteriormente en el notebook 04.
 
-El notebook contiene 9 celdas de código ejecutadas sin errores y tres figuras. Se limita al diagnóstico exploratorio: calidad, desbalance, estadísticas descriptivas, frecuencias predictoras, revisión visual de valores atípicos, correlaciones y recomendaciones.
+## Dimensiones y tipos
 
-No limpia ni transforma el DataFrame, no entrena modelos, no modifica el CSV y no valida la lógica financiera. Las asociaciones observadas no implican causalidad.
+El dataset contiene 10.000 filas y 18 columnas:
 
-La carga utiliza `pathlib` y rutas relativas compatibles tanto con la raíz del proyecto como con la carpeta `notebooks/`.
+- 12 columnas `int64`;
+- 2 columnas `float64` (`Balance` y `EstimatedSalary`);
+- 4 columnas de texto (`Surname`, `Geography`, `Gender` y `Card Type`).
 
-## Calidad del dataset
+Las nueve predictoras iniciales son `CreditScore`, `Geography`, `Age`, `Tenure`, `Balance`, `NumOfProducts`, `HasCrCard`, `IsActiveMember` y `EstimatedSalary`. `Exited` es la variable objetivo. `RowNumber`, `CustomerId` y `Surname` se reservan para trazabilidad; las variables adicionales se revisan sin incorporarlas automáticamente al MLP.
+
+## Calidad de los datos
 
 | Control | Resultado |
 |---|---:|
-| Filas | 10.000 |
-| Columnas | 21 |
-| Celdas faltantes | 0 |
+| Valores faltantes | 0 en las 18 columnas |
 | Filas duplicadas | 0 |
-| `CustomerId` duplicados | 0 |
-| `CustomerId` únicos | 10.000 |
+| `CustomerId` duplicados / únicos | 0 / 10.000 |
+| `RowNumber` duplicados | 0 |
 | Apellidos con `?` | 92 |
 
-El archivo no presenta problemas de calidad que bloqueen el diseño del preprocesamiento. El notebook utiliza `head()`, `info()`, `isna().sum()` y `duplicated()` para mostrar la muestra, los tipos, el conteo de nulos de las 21 columnas y los duplicados.
+`head()`, `info()`, `isna().sum()` y `duplicated()` sustentan la inspección. Los dominios de `HasCrCard`, `IsActiveMember`, `Exited` y `Complain` contienen exclusivamente `0` y `1`.
 
-El EDA detecta 92 apellidos que contienen `?`, pero no los modifica ni crea un DataFrame depurado. Su tratamiento se realiza en [`02_preprocesamiento.ipynb`](../notebooks/02_preprocesamiento.ipynb), sobre una copia independiente del CSV original.
+Los rangos observados son coherentes con el esquema: `CreditScore` 350–850, `Age` 18–92, `Tenure` 0–10, `Balance` 0–250.898,09, `NumOfProducts` 1–4, `EstimatedSalary` 11,58–199.992,48, `Satisfaction Score` 1–5 y `Point Earned` 119–1.000.
 
-Las columnas numéricas tienen tipos adecuados. Los rangos revisados de crédito, edad, antigüedad, saldo, productos y salario no presentan inconsistencias. `HasCrCard`, `IsActiveMember` y `Exited` contienen exclusivamente los valores binarios `0` y `1`.
-
-Las variables financieras simuladas permanecen en el CSV, pero se excluyen del análisis predictivo. Su validación detallada corresponde a la fase financiera.
+Los 92 apellidos con `?` se informan, pero no se modifican en el EDA. El notebook 02 representa esos apellidos como desconocidos sobre una copia, sin eliminar clientes ni alterar `CustomerId`.
 
 ## Distribución de `Exited`
 
 | Clase | Clientes | Porcentaje |
 |---|---:|---:|
-| Permaneció (`0`) | 7.963 | 79,63 % |
-| Abandonó (`1`) | 2.037 | 20,37 % |
+| Permaneció (`0`) | 7.962 | 79,62 % |
+| Abandonó (`1`) | 2.038 | 20,38 % |
 
-Existe un desbalance aproximado de 3,91 permanencias por cada abandono. La división posterior se implementó de forma estratificada en el notebook 2; durante el entrenamiento se deberá valorar la ponderación de clases. La exactitud no será suficiente como métrica principal.
+La relación cercana a 4:1 justifica particiones estratificadas, ponderación de clases y métricas sensibles a la clase minoritaria. La exactitud aislada no describe adecuadamente el rendimiento.
 
-## Distribuciones de las predictoras
+## Análisis descriptivo y valores atípicos
 
-El notebook conserva:
+El notebook utiliza `describe().T` para las ocho predictoras numéricas y diagramas de caja horizontales para `CreditScore`, `Age`, `Tenure`, `Balance` y `EstimatedSalary`. Los boxplots se usan como diagnóstico visual: no se genera una regla automática de eliminación ni se asume que un punto fuera de los bigotes sea erróneo.
 
-- estadísticas descriptivas mediante `describe().T` para `CreditScore`, `Age`, `Tenure`, `Balance` y `EstimatedSalary`;
-- frecuencias tabulares de `Geography`, `NumOfProducts`, `HasCrCard` e `IsActiveMember`;
-- diagramas de caja horizontales de `CreditScore`, `Age`, `Tenure`, `Balance` y `EstimatedSalary`.
+Los valores extremos se observan principalmente en `Age` y `CreditScore`. Las escalas de las variables difieren ampliamente, lo que respalda aplicar escalado después de separar los conjuntos y ajustarlo solo con entrenamiento.
 
-Los histogramas permanecen fuera para evitar resultados redundantes. La tabla resume tendencia central y dispersión, mientras que los boxplots permiten revisar visualmente posibles valores atípicos. Las diferencias de escala se tratan en el notebook de preprocesamiento.
+### Saldos cero
 
-### Balance y saldos cero
-
-| Grupo | Clientes | Porcentaje |
+| Condición | Clientes | Porcentaje |
 |---|---:|---:|
-| Saldo cero | 3.617 | 36,17 % |
-| Saldo positivo | 6.383 | 63,83 % |
+| `Balance = 0` | 3.617 | 36,17 % |
+| `Balance > 0` | 6.383 | 63,83 % |
 
-El saldo cero es frecuente y debe conservarse como valor válido, no tratarse como faltante. La distribución de `Balance` ya aparece junto con las demás predictoras numéricas; no se requieren análisis financieros adicionales en esta fase.
+El saldo cero es frecuente y válido; no se interpreta como faltante ni se elimina.
 
-### Revisión visual de valores atípicos
+## Variables adicionales y fuga de información
 
-Los diagramas de caja horizontales muestran puntos extremos principalmente en `CreditScore` y `Age`. No se genera una tabla adicional ni se eliminan observaciones automáticamente: los boxplots se utilizan únicamente como diagnóstico visual y los casos requieren contexto antes de considerarse errores.
+La tabla cruzada de `Complain` y `Exited` muestra 9.986 coincidencias de 10.000 (`99,86 %`): solo 14 filas difieren. La relación casi determinista puede indicar que la queja se registró después o como consecuencia del abandono. Incorporarla produciría fuga de información y resultados artificialmente altos, por lo que se excluye de las entradas del MLP.
 
-## Matriz de correlación
+`Gender`, `Card Type`, `Satisfaction Score` y `Point Earned` se exploran como contexto. Como el archivo no documenta el momento exacto de captura, el modelo inicial conserva las nueve características aprobadas. Cualquier ampliación requeriría comprobar disponibilidad previa al abandono y posibles implicaciones de equidad.
 
-La matriz de Pearson incluye las ocho predictoras numéricas y `Exited`. Se excluyen `CustomerId`, `Surname`, `Gender`, las variables financieras simuladas y `Geography`; esta última es nominal y se codifica en el notebook de preprocesamiento.
+## Correlación de Pearson
+
+El notebook presenta tanto las correlaciones individuales con `Exited` como una matriz anotada de las ocho predictoras numéricas y la etiqueta. Excluye identificadores, texto, `Gender`, variables adicionales y `Geography`, porque esta última es nominal.
 
 | Predictora | Correlación con `Exited` |
 |---|---:|
-| `Age` | 0,285 |
-| `IsActiveMember` | -0,156 |
-| `Balance` | 0,119 |
-| `NumOfProducts` | -0,048 |
-| `CreditScore` | -0,027 |
-| `Tenure` | -0,014 |
-| `EstimatedSalary` | 0,012 |
-| `HasCrCard` | -0,007 |
+| `Age` | 0,285296 |
+| `Balance` | 0,118577 |
+| `EstimatedSalary` | 0,012490 |
+| `HasCrCard` | -0,006976 |
+| `Tenure` | -0,013656 |
+| `CreditScore` | -0,026771 |
+| `NumOfProducts` | -0,047611 |
+| `IsActiveMember` | -0,156356 |
 
-Una correlación positiva indica que dos variables tienden a aumentar juntas y una negativa que una tiende a disminuir cuando la otra aumenta. `Age` presenta la mayor asociación lineal positiva con `Exited` (`0,285`), seguida por `Balance` (`0,119`). `IsActiveMember` tiene la asociación negativa de mayor magnitud (`-0,156`).
+`Age` presenta la asociación lineal positiva más alta y `IsActiveMember` la negativa de mayor magnitud. Las correlaciones bajas no vuelven inútil una variable: Pearson solo mide asociación lineal por pares y una red neuronal puede aprender interacciones y relaciones no lineales. No se elimina ninguna característica solo por esta matriz.
 
-Las asociaciones restantes son débiles. Esto no determina que una variable sea inútil: Pearson mide relaciones lineales por pares y no captura relaciones no lineales ni interacciones que una red neuronal puede aprender. No se elimina ninguna característica basándose solo en la matriz.
+## Figuras guardadas
 
-## Decisiones para el preprocesamiento
+1. Distribución de `Exited`.
+2. Diagramas de caja horizontales de cinco predictoras numéricas.
+3. Barras de correlación de las predictoras numéricas con `Exited`.
+4. Matriz de correlación de Pearson anotada.
 
-1. Dividir entrenamiento, validación y prueba de forma estratificada antes de ajustar transformadores; esta decisión se aplica en el notebook 2.
-2. Elegir y ajustar el escalador exclusivamente con el conjunto de entrenamiento. Esta decisión se implementa fuera del EDA en `02_preprocesamiento.ipynb` mediante `StandardScaler`.
-3. Codificar `Geography` después de la división. Esta decisión se implementa en `02_preprocesamiento.ipynb` con `OneHotEncoder(handle_unknown="ignore")`.
-4. Mantener `HasCrCard` e `IsActiveMember` como indicadores binarios validados.
-5. Representar en el notebook 2 los 92 apellidos desconocidos mediante `pd.NA`, sin inventar valores; `Surname` no se utiliza como entrada del modelo.
-6. No eliminar automáticamente saldos cero ni observaciones señaladas visualmente por los boxplots.
-7. Considerar ponderación de clases durante el entrenamiento y métricas adecuadas al desbalance.
-8. Ajustar todos los transformadores exclusivamente con el conjunto de entrenamiento.
-9. Excluir `CustomerId`, `Surname`, `Gender`, `Exited` y todas las variables financieras simuladas de la matriz de entrada.
+## Conclusiones para el preprocesamiento
 
-## Decisión de fase
+1. Conservar los 10.000 clientes y los saldos cero.
+2. Tratar los 92 apellidos desconocidos sobre una copia; `Surname` no entra al MLP.
+3. Excluir `Complain` por riesgo de fuga de información.
+4. Dividir entrenamiento, validación y prueba de forma estratificada antes de ajustar transformadores.
+5. Ajustar `StandardScaler` y `OneHotEncoder` exclusivamente con entrenamiento.
+6. Mantener `HasCrCard` e `IsActiveMember` como indicadores binarios.
+7. Conservar posibles valores atípicos salvo evidencia de error.
+8. Tratar el desbalance mediante ponderación de clases y evaluar ROC-AUC, PR-AUC, Brier Score, Log Loss, precisión, recall y F1.
 
-El dataset fue diagnosticado sin modificaciones. La limpieza y el pipeline se implementan de manera independiente en `02_preprocesamiento.ipynb`; el entrenamiento inicial posterior se encuentra en `03_red_neuronal.ipynb`. El EDA no realiza ninguna de esas transformaciones ni entrena modelos.
+Estas decisiones se implementan en `02_preprocesamiento.ipynb`; el EDA permanece exclusivamente descriptivo.

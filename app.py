@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import streamlit as st
 
 from ui.pages.buscador import render_buscador
@@ -23,6 +25,7 @@ st.set_page_config(
 )
 
 SECTIONS = ("Buscador de clientes", "Panel de cartera", "Simulador")
+LOGGER = logging.getLogger(__name__)
 
 
 def _configurar_navegacion(client_count: int) -> str:
@@ -46,10 +49,11 @@ def main() -> None:
     try:
         version = obtener_version_recursos()
         datos = cargar_datos_aplicacion(version)
-    except Exception as error:  # límite de interfaz: mensaje seguro y detención
+    except Exception:  # límite de interfaz: mensaje seguro y detención
+        LOGGER.exception("No fue posible inicializar Deep Retention.")
         st.error(
-            "No fue posible iniciar Deep Retention. Verifique datos, catálogo y "
-            f"artefactos. Detalle: {error}"
+            "No fue posible iniciar Deep Retention. Verifique que los datos, "
+            "el catálogo y los artefactos requeridos estén disponibles."
         )
         st.stop()
 
@@ -66,10 +70,11 @@ def main() -> None:
             render_dashboard(base.cartera)
         else:
             render_simulador(version, datos.catalogo, base)
-    except Exception as error:  # límite de presentación
+    except Exception:  # límite de presentación
+        LOGGER.exception("No fue posible preparar la vista seleccionada.")
         st.error(
-            "No fue posible preparar la vista seleccionada. "
-            f"Detalle: {error}"
+            "No fue posible preparar la vista seleccionada. Intente nuevamente "
+            "o solicite una revisión de los recursos de la aplicación."
         )
 
 

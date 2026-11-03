@@ -5,7 +5,12 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MODELS_DIR = PROJECT_ROOT / "models"
-CLIENTS_PATH = PROJECT_ROOT / "data" / "processed" / "clientes_limpios.csv"
+CLIENTS_PATH = (
+    PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "clientes_financieros_simulados.csv"
+)
 CATALOG_PATH = PROJECT_ROOT / "data" / "incentivos.csv"
 
 FEATURES = [

@@ -150,13 +150,13 @@ def _mostrar_tabla_oportunidades(cartera: pd.DataFrame) -> None:
     table = cartera.sort_values("gne", ascending=False)[
         [
             "CustomerId",
-            "Geography",
             "probabilidad_fuga",
             "margen_anual_usd",
-            "decision",
+            "rentabilidad",
             "incentivo_mostrado",
             "costo",
             "gne",
+            "decision",
         ]
     ]
     st.dataframe(
@@ -171,9 +171,10 @@ def _mostrar_tabla_oportunidades(cartera: pd.DataFrame) -> None:
                 format="%.2f",
             ),
             "margen_anual_usd": st.column_config.NumberColumn(
-                "Margen anual USD",
+                "Margen neto USD",
                 format="%.2f",
             ),
+            "rentabilidad": "Rentabilidad",
             "decision": "Decisión",
             "incentivo_mostrado": "Incentivo",
             "costo": st.column_config.NumberColumn("Costo USD", format="%.2f"),

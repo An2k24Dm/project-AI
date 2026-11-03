@@ -2,107 +2,174 @@
 
 [Volver al README](../README.MD) · [Arquitectura](architecture.md) · [Modelo financiero](financial-model.md) · [Desarrollo](development.md)
 
-## Estado
+## Estado y ejecución
 
-La aplicación se inicia desde [`app.py`](../app.py), pero su presentación está dividida en `ui/pages/`, sus elementos compartidos en `ui/components.py` y `ui/styles.py`, y la coordinación con negocio en `ui/services.py`. No entrena el MLP, no ajusta el preprocesador y no escribe sobre los CSV.
+La aplicación está implementada como un monolito modular. `app.py` inicializa la página y la navegación; `ui/pages/` contiene las tres vistas; `ui/services.py` coordina datos, caché, inferencia y escenarios. No entrena el MLP, no regenera variables financieras y no escribe en los CSV.
+
+Desde la raíz del proyecto:
 
 ```bash
 uv run streamlit run app.py
 ```
 
-La interfaz tiene tres secciones accesibles desde la barra lateral:
-
 ```mermaid
 flowchart LR
-    I[Deep Retention] --> B[Buscador de clientes]
-    I --> D[Panel de cartera]
-    I --> S[Simulador]
-    B --> R[Perfil, probabilidad y decisión]
-    D --> A[KPI, filtros y gráficos]
-    S --> C[Escenario base frente a simulado]
+    A[Deep Retention] --> B[Buscador de clientes]
+    A --> C[Panel de cartera]
+    A --> D[Simulador]
+    B --> E[Cliente, MLP, finanzas y decisión]
+    C --> F[KPI, filtros, gráficos y oportunidades]
+    D --> G[Escenario base frente a simulado]
 ```
 
-## Buscador de clientes
+## Fuente y contratos
 
-La consulta acepta un `CustomerId`, comprueba que exista una sola fila y muestra:
-
-- identificación y contexto bancario del cliente;
-- saldo en su unidad original no declarada;
-- variables financieras simuladas etiquetadas en USD;
-- probabilidad ajustada de abandono y nivel visual de riesgo;
-- decisión `Retener`, `No intervención` o `Salida permitida`;
-- incentivo, costo, GNE y explicación de la decisión;
-- detalle auditable de todas las alternativas evaluadas.
-
-El nivel de riesgo es descriptivo. No autoriza por sí solo un incentivo: la recomendación utiliza elegibilidad comercial, margen y GNE. Un identificador inválido o inexistente genera un mensaje comprensible y no una recomendación parcial. La pantalla inicial no carga TensorFlow ni el MLP: la inferencia individual comienza al pulsar **Buscar cliente** y utiliza los percentiles de la cartera completa.
-
-## Panel de cartera
-
-La aplicación realiza una sola inferencia por lotes para los 10.000 clientes y reutiliza esas probabilidades. El escenario base expone:
-
-- clientes analizados y distribución de decisiones;
-- inversión, valor esperado a rescatar, GNE y ROI proyectados;
-- saldo expuesto, definido como `Σ(probabilidad × Balance)` y conservado en la unidad original de `Balance`;
-- abandonos esperados evitados, definido como `Σ(probabilidad × efectividad)` para intervenciones seleccionadas;
-- efectividad ponderada por riesgo de las intervenciones;
-- histogramas, distribuciones, relación riesgo-margen e indicadores por incentivo;
-- tabla ordenable de clientes y oportunidades.
-
-Los filtros por país, rentabilidad, decisión, incentivo y probabilidad operan sobre resultados ya calculados. No vuelven a estimar percentiles ni cambian decisiones, por lo que un mismo cliente conserva la recomendación del escenario de referencia.
-
-## Simulador
-
-El simulador permite modificar temporalmente el costo y la efectividad de los cuatro incentivos. Mantiene constantes:
-
-- las probabilidades producidas por el MLP;
-- los percentiles comerciales del escenario base;
-- los datos de clientes y los archivos originales.
-
-Al recalcular, el motor financiero vuelve a evaluar elegibilidad económica y GNE con una copia del catálogo. Se muestran diferencias absolutas y porcentuales, distribución de incentivos y KPI del escenario simulado. El botón de restablecimiento recupera los valores oficiales. Ningún cambio se persiste en disco.
-
-## Carga y caché
-
-La aplicación resuelve las rutas desde la raíz del proyecto y valida:
+La aplicación utiliza:
 
 ```text
-data/processed/clientes_limpios.csv
+data/processed/clientes_financieros_simulados.csv
 data/incentivos.csv
 models/preprocesador.joblib
 models/modelo_churn.keras
 models/correccion_probabilidades.json
 ```
 
-Se utiliza `st.cache_resource` para una instancia del predictor por versión y `st.cache_data` para datos, percentiles, probabilidades, cartera base, consultas individuales y escenarios. La clave de versión incorpora tamaño y fecha de modificación de:
+El CSV de clientes contiene 10.000 filas, 18 columnas originales y ocho simuladas. `src/data_processing.py` valida esquema, identificadores únicos, valores numéricos finitos, importes no negativos cuando corresponde y coherencia entre margen y segmento de rentabilidad.
 
-- `clientes_limpios.csv`;
-- `incentivos.csv`;
-- `modelo_churn.keras`;
-- `preprocesador.joblib`;
-- `correccion_probabilidades.json`.
+Las probabilidades conservan el orden de `CustomerId`. El MLP recibe solo sus nueve características originales; las columnas financieras, `Exited` y `Complain` no entran a la inferencia.
 
-Así se invalidan los resultados afectados sin calcular repetidamente el hash de archivos grandes. Los parámetros editables permanecen en `session_state` y el restablecimiento recupera el catálogo base.
+## Buscador de clientes
 
-## Tratamiento de errores
+La consulta por `CustomerId` está organizada en cuatro bloques.
+
+### A. Identificación y perfil bancario
+
+Muestra identificador, apellido, edad, país, antigüedad, saldo, productos y condición de cliente activo. `Balance` conserva su unidad original no declarada.
+
+Una entrada no numérica o un identificador inexistente produce un aviso comprensible y no una recomendación parcial.
+
+### B. Predicción del modelo neuronal
+
+Presenta:
+
+- puntaje del MLP como probabilidad ajustada;
+- porcentaje de abandono estimado;
+- clasificación descriptiva del riesgo;
+- barra visual de progreso;
+- aclaración de que la probabilidad no es certeza ni `CreditScore`.
+
+El nivel visual de riesgo no autoriza incentivos. La decisión depende de margen, elegibilidad y Ganancia Neta Esperada (GNE).
+
+### C. Información financiera simulada
+
+Muestra transacciones y volumen mensuales, comisión promedio, ingresos por comisiones, contribución financiera anual, costos operativos, margen neto anual y segmento `Rentable` o `Deficitario`.
+
+### D. Decisión comercial recomendada
+
+Presenta `Retener`, `No intervención` o `Salida permitida`, junto con incentivo, costo, efectividad hipotética, beneficio bruto esperado y GNE. Para una retención se muestra la fórmula con los valores concretos del cliente.
+
+- Un cliente deficitario no recibe gasto.
+- Un cliente sin intervención puede generar margen, pero el beneficio, costo y GNE de una campaña no ejecutada son cero.
+- Un desplegable permite auditar las cuatro alternativas, su elegibilidad, GNE y motivos de rechazo.
+
+La búsqueda individual carga el predictor al solicitar un cliente y utiliza los percentiles calculados sobre la cartera completa; no necesita construir previamente todas las decisiones.
+
+## Panel ejecutivo de cartera
+
+La primera apertura del panel ejecuta inferencia por lotes para 10.000 clientes y conserva las probabilidades en caché.
+
+### Indicadores
+
+El panel muestra:
+
+1. clientes analizados;
+2. rentables;
+3. deficitarios;
+4. retener;
+5. no intervención;
+6. salida permitida;
+7. inversión proyectada;
+8. beneficio bruto esperado;
+9. Ganancia Neta Esperada total;
+10. ROI proyectado;
+11. saldo expuesto;
+12. abandonos esperados evitados y efectividad ponderada por riesgo.
+
+El saldo expuesto es `Σ(P_f × Balance)` y se presenta en unidades originales, nunca como USD. No equivale a dinero perdido ni a beneficio recuperable. Los indicadores de efectividad dependen de probabilidades y efectividades hipotéticas, no de campañas observadas.
+
+### Filtros
+
+Los filtros disponibles son país, rentabilidad, decisión, incentivo y rango de probabilidad. Actualizan KPI, gráficos y tabla del subconjunto, pero no recalculan percentiles ni cambian decisiones previamente obtenidas con la cartera completa.
+
+### Gráficos
+
+Las pestañas muestran:
+
+- distribución de probabilidades y clientes rentables/deficitarios;
+- distribución de decisiones, incentivos recomendados y relación riesgo–margen;
+- inversión y GNE por incentivo, y rentabilidad por decisión.
+
+### Tabla ejecutiva
+
+La tabla ordenada por GNE contiene `CustomerId`, probabilidad, margen neto, rentabilidad, incentivo, costo, GNE y decisión. Las oportunidades con mayor GNE aparecen primero.
+
+## Simulador de campañas
+
+El simulador muestra los valores base y permite modificar temporalmente:
+
+- costo anual de cada incentivo;
+- efectividad hipotética, como parámetro académico adicional.
+
+Los controles impiden costos negativos y efectividades fuera de `[0, 1]`. Al recalcular:
+
+1. se crea una copia del catálogo en memoria;
+2. se conservan datos, probabilidades del MLP y percentiles base;
+3. se reevalúan elegibilidad, GNE, incentivo óptimo y decisiones;
+4. se actualizan indicadores y visualizaciones.
+
+El MLP no se reentrena ni vuelve a inferir cuando solo cambian costos o efectividades.
+
+La comparación incluye clientes a retener, inversión, beneficio bruto esperado, GNE, ROI y abandonos esperados evitados, con diferencias absolutas y porcentuales cuando son matemáticamente aplicables. También muestra gráficos base/simulado de inversión, GNE y distribución de incentivos.
+
+**Restablecer valores originales** recupera costos y efectividades de `data/incentivos.csv`. Ninguna simulación persiste en disco.
+
+## Caché e invalidación
+
+`ui/services.py` utiliza:
+
+- `st.cache_resource` para una instancia de `PredictorFuga` por versión;
+- `st.cache_data` para clientes, catálogo, percentiles, probabilidades, escenario base, consultas y simulaciones.
+
+La versión se calcula con nombre, tamaño y fecha de modificación de los cinco recursos. Reemplazar el CSV financiero, el catálogo o un artefacto produce una clave nueva y evita reutilizar resultados incompatibles.
+
+## Manejo de errores
 
 | Situación | Comportamiento |
 |---|---|
-| Dataset o catálogo ausente | Se detiene el inicio con un mensaje sobre el recurso esperado. |
-| Esquema incompatible | Se indican las columnas requeridas faltantes. |
-| `CustomerId` inválido o inexistente | Se informa el problema sin mostrar una decisión. |
-| Artefactos incompatibles | El predictor rechaza la carga o la entrada antes de inferir. |
-| Parámetro simulado fuera de rango | El control o el validador impide calcular el escenario. |
-| Inversión igual a cero | El ROI se presenta como no aplicable. |
-| Filtros sin resultados | Se muestran KPI nulos y un aviso, sin gráficos engañosos. |
+| Recurso ausente o esquema incompleto | Inicio detenido con mensaje seguro. |
+| `CustomerId` inválido o inexistente | Aviso sin decisión parcial. |
+| Artefactos incompatibles | Inferencia rechazada antes de producir resultados. |
+| Valores financieros no finitos o incoherentes | Carga rechazada. |
+| Costo o efectividad fuera de dominio | Control y validador impiden el escenario. |
+| Inversión cero | ROI presentado como no aplicable. |
+| Filtros sin resultados | KPI nulos y aviso, sin gráficos engañosos. |
 
-## Interpretación responsable
+Las excepciones técnicas se registran en el servidor y la interfaz muestra mensajes comprensibles, sin trazas ni rutas locales.
 
-Los costos, las efectividades y las variables financieras con sufijo `_Sim` son supuestos académicos. La GNE, el ROI, el valor a rescatar y los abandonos evitados son valores esperados, no beneficios observados ni evidencia causal. La unidad de `Balance` no se etiqueta como USD.
+## Transparencia e interpretación
 
-## Verificación
+La aplicación diferencia:
 
-La suite contiene 55 pruebas. Comprueba búsqueda válida, inválida y las tres decisiones; KPI base; filtros individuales, combinados y vacíos; estabilidad de recomendaciones; cambios de costo y efectividad; inmutabilidad del catálogo; ROI sin inversión; firma de recursos; navegación real; envío del formulario y restablecimiento mediante `streamlit.testing.v1.AppTest`.
+- datos observados del CSV original;
+- probabilidades estimadas por el MLP;
+- variables financieras simuladas;
+- efectividades hipotéticas de los incentivos;
+- beneficios económicos proyectados.
 
-La verificación visual se realizó además en un navegador real, con las tres
-vistas, búsqueda válida e inválida, panel, filtros, recálculo y restablecimiento
-del simulador. Esta revisión complementa, pero no sustituye, las pruebas de
-componentes.
+GNE, ROI y abandonos esperados evitados no son resultados reales. La herramienta es un apoyo académico para explorar decisiones bajo supuestos explícitos.
+
+## Verificación funcional
+
+Las pruebas automatizadas cubren búsqueda existente e inexistente, correspondencia entre consulta y cartera, indicadores base, filtros, estabilidad de decisiones, simulación sin mutación, parámetros inválidos, firma de recursos y navegación mediante `streamlit.testing.v1.AppTest`.
+
+La verificación de la integración también incluyó arranque real, búsqueda, panel, recálculo y restablecimiento del simulador. Las cifras de referencia permanecen en el [modelo financiero](financial-model.md).

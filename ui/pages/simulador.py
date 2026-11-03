@@ -49,7 +49,11 @@ def _capturar_parametros(catalogo: pd.DataFrame) -> ParametrosEscenario:
     with st.form("simulator_parameters"):
         for _, incentive in catalogo.iterrows():
             incentive_id = int(incentive["incentivo_id"])
-            st.markdown(f"**{incentive['nombre']}**")
+            st.markdown(
+                f"**{incentive['nombre']}** — costo base "
+                f"USD {float(incentive['costo_anual_usd']):,.2f}; "
+                f"efectividad base {float(incentive['efectividad']):.0%}"
+            )
             left, right = st.columns(2)
             cost = left.number_input(
                 "Costo anual USD",
@@ -115,6 +119,44 @@ def _mostrar_distribucion(
     st.plotly_chart(chart, width="stretch")
 
 
+def _mostrar_comparacion_financiera(
+    base_indicators: dict[str, float | int | None],
+    simulated_indicators: dict[str, float | int | None],
+) -> None:
+    comparison = pd.DataFrame(
+        {
+            "Escenario": ["Base", "Simulado"],
+            "Inversión total": [
+                base_indicators["inversion_total_usd"],
+                simulated_indicators["inversion_total_usd"],
+            ],
+            "GNE total": [
+                base_indicators["gne_total_usd"],
+                simulated_indicators["gne_total_usd"],
+            ],
+        }
+    )
+    left, right = st.columns(2)
+    investment = px.bar(
+        comparison,
+        x="Escenario",
+        y="Inversión total",
+        color="Escenario",
+        title="Inversión total: base y simulada",
+        color_discrete_map={"Base": GRAY, "Simulado": GREEN},
+    )
+    left.plotly_chart(investment, width="stretch")
+    gne = px.bar(
+        comparison,
+        x="Escenario",
+        y="GNE total",
+        color="Escenario",
+        title="GNE total: base y simulada",
+        color_discrete_map={"Base": GRAY, "Simulado": GREEN},
+    )
+    right.plotly_chart(gne, width="stretch")
+
+
 def render_simulador(
     version: str,
     catalogo: pd.DataFrame,
@@ -148,7 +190,36 @@ def render_simulador(
 
     st.subheader("Comparación de escenarios")
     comparison = comparar_escenarios(base.indicadores, simulated_indicators)
-    st.dataframe(comparison, hide_index=True, width="stretch")
+    indicator_names = {
+        "clientes_retener": "Clientes a retener",
+        "inversion_total_usd": "Inversión total (USD)",
+        "beneficio_bruto_esperado_usd": "Beneficio bruto esperado (USD)",
+        "gne_total_usd": "GNE total (USD)",
+        "roi_proyectado_pct": "ROI proyectado (%)",
+        "abandonos_esperados_evitados": "Abandonos esperados evitados",
+    }
+    comparison["indicador"] = comparison["indicador"].map(indicator_names)
+    st.dataframe(
+        comparison,
+        hide_index=True,
+        width="stretch",
+        column_config={
+            "indicador": "Indicador",
+            "escenario_base": st.column_config.NumberColumn(
+                "Escenario base", format="%.2f"
+            ),
+            "escenario_simulado": st.column_config.NumberColumn(
+                "Escenario simulado", format="%.2f"
+            ),
+            "diferencia_absoluta": st.column_config.NumberColumn(
+                "Diferencia absoluta", format="%+.2f"
+            ),
+            "diferencia_porcentual": st.column_config.NumberColumn(
+                "Diferencia (%)", format="%+.2f"
+            ),
+        },
+    )
+    _mostrar_comparacion_financiera(base.indicadores, simulated_indicators)
     _mostrar_distribucion(base.cartera, simulated_portfolio)
 
     st.subheader("Indicadores del escenario simulado")

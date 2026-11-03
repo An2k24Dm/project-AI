@@ -2,155 +2,163 @@
 
 [Volver al README](../README.MD) · [Dataset](dataset.md) · [Aprendizaje automático](machine-learning.md) · [Modelo financiero](financial-model.md) · [Aplicación](application.md)
 
-## Estado del documento
-
-La arquitectura completa está implementada y separa presentación, coordinación y negocio. `app.py` solo configura Streamlit y dirige la navegación; `ui/` contiene páginas, componentes, estilos y servicios; `src/` conserva datos, inferencia, analítica y reglas financieras.
-
 ## Estilo arquitectónico
 
-Deep Retention es un monolito Python sencillo, desplegable y ejecutable como una única aplicación Streamlit. La organización es modular por responsabilidad funcional, sin capas ceremoniales ni patrones que no aporten valor al alcance académico.
+Deep Retention es un monolito Python modular ejecutado como una aplicación Streamlit. Separa preparación de datos, entrenamiento, inferencia, reglas financieras, analítica y presentación, sin introducir servicios externos.
 
-La solución no utilizará:
+No se implementan base de datos, API REST, microservicios, Docker ni un frontend independiente. Los CSV y artefactos versionados son entradas locales de solo lectura para la aplicación.
 
-- bases de datos relacionales;
-- Docker o Docker Compose;
-- microservicios o arquitectura distribuida;
-- API REST;
-- Domain-Driven Design, entidades, objetos de valor o repositorios;
-- puertos, adaptadores, Mediator ni un frontend independiente.
+## Responsabilidades
 
-Esta decisión reduce la preparación necesaria para la demostración y mantiene explícita la separación entre datos, inferencia, cálculo financiero y presentación.
+| Componente | Responsabilidad |
+|---|---|
+| `app.py` | Configurar Streamlit, cargar el estado mínimo, gestionar navegación y convertir fallos generales en mensajes seguros. |
+| `src/constants.py` | Definir raíz, rutas de recursos y las nueve características del MLP. |
+| `src/data_processing.py` | Cargar y validar el CSV financiero y el catálogo; buscar clientes; crear catálogos temporales. |
+| `src/prediction.py` | Cargar y validar preprocesador, modelo y corrección; inferir individualmente o por lotes. |
+| `src/financial.py` | Validar incentivos, calcular percentiles, evaluar elegibilidad, GNE y decisiones. |
+| `src/analytics.py` | Enriquecer resultados, calcular KPI, filtrar resultados existentes y comparar escenarios. |
+| `ui/services.py` | Coordinar recursos, firma de versión, caché, inferencia y escenarios base/simulado. |
+| `ui/pages/buscador.py` | Presentar perfil, predicción, finanzas y recomendación individual. |
+| `ui/pages/dashboard.py` | Presentar filtros, KPI, gráficos y tabla ejecutiva. |
+| `ui/pages/simulador.py` | Gestionar formulario, estado temporal y comparación de escenarios. |
+| `ui/components.py` | Formatos, tarjetas KPI y aviso académico compartidos. |
+| `ui/styles.py` | Paleta y CSS visual compartido. |
 
-## Componentes y responsabilidades
+## Flujo completo de datos
 
-| Componente | Responsabilidad | Dependencias principales |
-|---|---|---|
-| `app.py` | Configuración, navegación, inicialización mínima y errores generales. | Módulos de `ui/`; no contiene gráficos ni negocio. |
-| `ui/pages/buscador.py` | Consulta diferida y presentación individual. | Servicios y componentes compartidos. |
-| `ui/pages/dashboard.py` | Filtros, KPI, gráficos y tabla de oportunidades. | `src.analytics`; no recalcula decisiones. |
-| `ui/pages/simulador.py` | Estado de sesión, formulario y comparación de escenarios. | Servicios y componentes compartidos. |
-| `ui/components.py` | Formatos, KPI y avisos reutilizables. | Streamlit. |
-| `ui/styles.py` | Paleta y CSS limitado a elementos no cubiertos por el tema. | Streamlit y `.streamlit/config.toml`. |
-| `ui/services.py` | Firma de recursos, caché, carga diferida, inferencia y escenarios. | Funciones existentes de `src/`. |
-| `src/constants.py` | Rutas y características comunes sin importar TensorFlow. | `pathlib`. |
-| `src/data_processing.py` | Lectura de CSV, validación de esquema y preparación de entradas. | Pandas, preprocesador exportado cuando corresponda. |
-| `src/prediction.py` | Carga y valida preprocesador, MLP y corrección; predicción individual y por lotes. | TensorFlow/Keras, Joblib. |
-| `src/financial.py` | Catálogo, percentiles comerciales, GNE, selección, cartera y agregados. | Pandas, datos financieros y catálogo. |
-| `src/analytics.py` | Agregados de cartera, ROI y datos para visualizaciones. | Predicciones y decisiones financieras. |
-| Archivos CSV | Fuente local de clientes e incentivos. | Sin servidor de base de datos. |
-| Artefactos en `models/` | Modelo, preprocesador y corrección versionados. | Cargados bajo demanda, nunca reentrenados en Streamlit. |
+```mermaid
+flowchart TD
+    CSV[data/Customer-Churn-Records.csv\n10.000 x 18]
 
-## Diagrama de arquitectura
+    CSV -. diagnóstico sin cambios .-> EDA[01_eda.ipynb]
+    CSV --> PRE[02_preprocesamiento.ipynb]
+    PRE --> CLEAN[data/processed/clientes_limpios.csv]
+    PRE --> NPZ[train / validation / test .npz]
+    PRE --> META[data/processed/metadata.json]
+    PRE --> PP[models/preprocesador.joblib]
+
+    NPZ --> MLP[03_red_neuronal.ipynb]
+    META --> MLP
+    MLP --> NN[models/modelo_churn.keras]
+    MLP --> CORR[models/correccion_probabilidades.json]
+
+    CSV --> FIN[04_analisis_financiero.ipynb]
+    PP --> FIN
+    NN --> FIN
+    CORR --> FIN
+    CAT[data/incentivos.csv] --> FIN
+    FIN --> FCSV[data/processed/clientes_financieros_simulados.csv\n10.000 x 26]
+
+    FCSV --> APP[Streamlit]
+    CAT --> APP
+    PP --> APP
+    NN --> APP
+    CORR --> APP
+```
+
+El EDA no transforma datos. El notebook 02 genera la copia limpia y el contrato de preprocesamiento. El notebook 03 consume las particiones transformadas y exporta el MLP y su corrección. El notebook 04 vuelve al CSV original, añade ocho columnas simuladas y exporta la fuente usada por Streamlit.
+
+## Arquitectura de ejecución
 
 ```mermaid
 flowchart LR
-    U[Usuario] --> APP[app.py / navegación]
+    U[Usuario] --> APP[app.py]
 
-    subgraph MON[Monolito Python]
+    subgraph UI[Presentación]
         APP --> PAGES[ui/pages]
+        PAGES --> COMP[ui/components.py]
+        PAGES --> STYLE[ui/styles.py]
+    end
+
+    subgraph COORD[Coordinación]
         PAGES --> SVC[ui/services.py]
-        PAGES --> CMP[ui/components.py]
-        SVC --> DP[src/data_processing.py]
-        SVC --> PR[src/prediction.py]
-        SVC --> FN[src/financial.py]
+    end
+
+    subgraph CORE[Negocio]
+        SVC --> DATA[src/data_processing.py]
+        SVC --> PRED[src/prediction.py]
+        SVC --> FIN[src/financial.py]
         SVC --> AN[src/analytics.py]
-        PR --> FN
-        FN --> AN
     end
 
-    DC[(CSV de clientes)] --> DP
-    IC[(CSV de incentivos)] --> FN
-    PP[(preprocesador.joblib)] --> PR
-    NN[(modelo_churn.keras)] --> PR
-    CP[(correccion_probabilidades.json)] --> PR
+    RES[(CSV financiero + catálogo)] --> DATA
+    ART[(preprocesador + MLP + corrección)] --> PRED
+    DATA --> FIN
+    PRED --> FIN
+    FIN --> AN
     AN --> PAGES
-
-    subgraph OFF[Flujo de entrenamiento fuera de Streamlit]
-        PRE[02_preprocesamiento.ipynb] --> PP
-        RED[03_red_neuronal.ipynb] --> NN
-        RED --> CP
-    end
-    DC --> PRE
-    PRE --> RED
 ```
 
-Las flechas desde entrenamiento hacia los artefactos representan un proceso separado de la aplicación. La aplicación solo consume artefactos ya generados.
+## Flujo de inferencia y decisión
 
-## Flujo de una consulta individual
+1. `data_processing` valida clientes y catálogo.
+2. `PredictorFuga` selecciona nueve características; las ocho financieras, `Exited` y `Complain` quedan fuera.
+3. `preprocesador.joblib` transforma 9 entradas originales en 11 valores.
+4. `modelo_churn.keras` produce una salida Sigmoid.
+5. `correccion_probabilidades.json` aplica la corrección analítica por pesos de clase.
+6. `financial` combina probabilidad, margen neto simulado y catálogo; evalúa elegibilidad y Ganancia Neta Esperada (GNE).
+7. `analytics` agrega contexto, indicadores y comparaciones.
+8. Las páginas presentan los resultados sin duplicar las reglas.
+
+La identidad entre cliente y probabilidad se conserva por orden en inferencia por lotes y por `CustomerId` al unir resultados.
+
+## Consulta individual
 
 ```mermaid
 sequenceDiagram
     actor Usuario
-    participant UI as ui/pages/buscador
-    participant Servicios as ui/services
-    participant Pred as prediction
-    participant Prep as preprocesador.joblib
-    participant MLP as modelo_churn.keras
-    participant Finanzas as financial
+    participant UI as Buscador
+    participant S as ui/services.py
+    participant P as PredictorFuga
+    participant F as src/financial.py
 
     Usuario->>UI: Ingresa CustomerId
-    UI->>Servicios: Solicita CustomerId
-    Servicios->>Servicios: Recupera datos y percentiles en caché
-    Servicios->>Pred: Solicita probabilidad individual
-    Pred->>Prep: Transforma 9 características
-    Prep-->>Pred: Vector transformado
-    Pred->>MLP: Ejecuta inferencia
-    MLP-->>Pred: Probabilidad de abandono [0, 1]
-    Pred-->>Servicios: Probabilidad con corrección aproximada
-    Servicios->>Finanzas: Evalúa incentivos elegibles
-    Finanzas-->>Servicios: Mejor GNE positiva o no intervención
-    Servicios-->>UI: Perfil y decisión trazable
-    UI-->>Usuario: Riesgo, margen y decisión
+    UI->>S: Solicita resultado
+    S->>S: Recupera cliente y percentiles en caché
+    S->>P: Predice una fila
+    P-->>S: Probabilidad ajustada
+    S->>F: Evalúa cuatro alternativas
+    F-->>S: Decisión y trazabilidad
+    S-->>UI: Perfil, probabilidad, finanzas y GNE
 ```
 
-## Contratos entre componentes
+La consulta individual no necesita construir la cartera completa. El panel sí usa inferencia por lotes; el simulador reutiliza sus probabilidades.
 
-### Datos hacia predicción
+## Contratos
 
-El módulo de predicción recibirá exactamente estas características, con nombres y tipos validados:
+### Datos a predicción
 
-`CreditScore`, `Geography`, `Age`, `Tenure`, `Balance`, `NumOfProducts`, `HasCrCard`, `IsActiveMember` y `EstimatedSalary`.
+`CreditScore`, `Geography`, `Age`, `Tenure`, `Balance`, `NumOfProducts`, `HasCrCard`, `IsActiveMember` y `EstimatedSalary`, con esquema, finitud, categorías y dominios binarios validados.
 
-No aceptará `Exited`, identificadores, variables demográficas excluidas ni variables financieras simuladas como entradas del MLP.
+### Predicción a finanzas
 
-### Predicción hacia finanzas
+Probabilidad finita en `[0, 1]`, asociada inequívocamente al cliente. El motor financiero no depende de detalles internos de TensorFlow.
 
-El contrato mínimo es una probabilidad finita dentro de `[0, 1]`, asociada inequívocamente a un `CustomerId`. El motor financiero combina esa probabilidad con el margen del cliente y los parámetros de cada incentivo; no conoce detalles internos de TensorFlow.
+### Finanzas a presentación
 
-### Finanzas hacia presentación
+Decisión, margen, incentivo, perfil, elegibilidad, costo, efectividad, beneficio bruto, GNE, motivo y detalle de las cuatro alternativas.
 
-El resultado conserva probabilidad, margen, incentivo, perfil requerido, elegibilidad, costo, efectividad, GNE, motivo y todas las alternativas evaluadas. Un margen no positivo produce «Salida permitida»; un cliente rentable sin alternativa conveniente produce «No intervención».
+## Persistencia
 
-## Gestión de archivos
+- `Customer-Churn-Records.csv` conserva los datos observados originales.
+- `clientes_limpios.csv` y las particiones pertenecen al flujo de ML.
+- `clientes_financieros_simulados.csv` es la fuente de clientes de Streamlit.
+- `incentivos.csv` es el catálogo base.
+- `preprocesador.joblib`, `modelo_churn.keras` y `correccion_probabilidades.json` forman el contrato de inferencia.
 
-La persistencia es exclusivamente local mediante CSV y artefactos serializados:
+La aplicación trata estos recursos como solo lectura. Los escenarios viven en memoria y no sobrescriben datos ni catálogo.
 
-- El CSV original `data/Deep_Retention_Dataset.csv` se conserva como entrada de solo lectura; la aplicación consume `data/processed/clientes_limpios.csv`.
-- `data/incentivos.csv` contiene cuatro acciones y condiciones comerciales académicas verificadas.
-- `models/modelo_churn.keras` contiene la red entrenada.
-- `models/preprocesador.joblib` contiene el pipeline ajustado con entrenamiento.
-- `models/correccion_probabilidades.json` registra la corrección aproximada por pesos de clase y el identificador de artefacto.
+## Caché y ciclo de vida
 
-La aplicación tratará estos archivos como entradas de solo lectura. Las simulaciones vivirán en el estado de sesión de Streamlit y no sobrescribirán los CSV.
+Al iniciar, `app.py` obtiene una firma de versión basada en nombre, tamaño y fecha de modificación de los cinco recursos de la aplicación. `st.cache_data` conserva datos, percentiles, probabilidades y escenarios; `st.cache_resource` mantiene una instancia del predictor.
 
-## Inicio y ciclo de vida
+El buscador carga el MLP al realizar una consulta. El panel construye la cartera base bajo demanda. El simulador conserva probabilidades y percentiles, y recalcula solo las reglas financieras cuando cambian costos o efectividades.
 
-Al iniciar, Streamlit valida la presencia y metadatos de clientes, catálogo y artefactos, pero solo carga los CSV. La firma de versión combina nombre, tamaño y fecha de modificación en nanosegundos de los cinco recursos. Un cambio normal en cualquiera de ellos crea una clave de caché nueva.
-
-El predictor se crea con `st.cache_resource` al buscar un cliente o abrir una vista de cartera. Los datos, percentiles, probabilidades, escenario base y escenarios simulados usan `st.cache_data`. El panel ejecuta la inferencia por lotes una sola vez por versión; el simulador reutiliza esas probabilidades y los percentiles originales.
-
-La ejecución oficial es:
+## Ejecución y límites
 
 ```bash
 uv run streamlit run app.py
 ```
 
-La primera ejecución podrá requerir Internet para resolver dependencias. El funcionamiento normal no dependerá de descargas externas de datos o modelos.
-
-## Decisiones y límites
-
-- La separación funcional facilita las pruebas sin introducir una arquitectura distribuida.
-- CSV simplifica la demostración, pero no ofrece concurrencia, control transaccional ni escalabilidad de una base de datos.
-- Los artefactos deben crearse con versiones compatibles con el entorno de inferencia.
-- Los resultados financieros son proyecciones basadas en datos y supuestos simulados, no resultados reales de una campaña.
-- La distribución del dataset y de los artefactos queda condicionada a comprobar licencia y tamaño antes de la entrega.
+La primera sincronización de dependencias puede necesitar Internet; la operación normal no descarga datos ni modelos. La arquitectura favorece una demostración reproducible, pero no aporta concurrencia transaccional, escalabilidad distribuida ni garantías de producción bancaria.

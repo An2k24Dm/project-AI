@@ -49,45 +49,51 @@ def mostrar_aviso_academico() -> None:
 def mostrar_kpis(indicadores: Mapping[str, float | int | None]) -> None:
     """Presenta los indicadores comunes del panel y del simulador."""
 
-    first = st.columns(4)
+    first = st.columns(3)
     first[0].metric("Clientes", f"{indicadores['clientes_analizados']:,}")
-    first[1].metric("Retener", f"{indicadores['clientes_retener']:,}")
-    first[2].metric(
+    first[1].metric("Rentables", f"{indicadores['clientes_rentables']:,}")
+    first[2].metric("Deficitarios", f"{indicadores['clientes_deficitarios']:,}")
+
+    second = st.columns(3)
+    second[0].metric("Retener", f"{indicadores['clientes_retener']:,}")
+    second[1].metric(
         "No intervención",
         f"{indicadores['clientes_no_intervencion']:,}",
     )
-    first[3].metric(
+    second[2].metric(
         "Salida permitida",
         f"{indicadores['clientes_salida_permitida']:,}",
     )
-    second = st.columns(2)
-    second[0].metric(
-        "Inversión",
-        formato_usd(indicadores["inversion_total_usd"]),
-    )
-    second[1].metric("GNE total", formato_usd(indicadores["gne_total_usd"]))
 
     third = st.columns(2)
     third[0].metric(
-        "Valor esperado a rescatar",
-        formato_usd(indicadores["valor_rescatable_estimado_usd"]),
+        "Inversión",
+        formato_usd(indicadores["inversion_total_usd"]),
     )
-    roi = indicadores["roi_proyectado_pct"]
-    third[1].metric("ROI proyectado", "N/A" if roi is None else f"{roi:.2f} %")
+    third[1].metric(
+        "Beneficio bruto esperado",
+        formato_usd(indicadores["beneficio_bruto_esperado_usd"]),
+    )
 
     fourth = st.columns(2)
-    fourth[0].metric(
+    fourth[0].metric("GNE total", formato_usd(indicadores["gne_total_usd"]))
+    roi = indicadores["roi_proyectado_pct"]
+    fourth[1].metric("ROI proyectado", "N/A" if roi is None else f"{roi:.2f} %")
+
+    fifth = st.columns(2)
+    fifth[0].metric(
         "Saldo expuesto¹",
         formato_numero(indicadores["saldo_expuesto_unidades_originales"]),
     )
     weighted = indicadores["efectividad_ponderada_riesgo"]
     weighted_text = "N/A" if weighted is None else f"{weighted:.1%} ponderada"
-    fourth[1].metric(
-        "Abandonos esperados evitados",
+    fifth[1].metric(
+        "Abandonos esperados evitados²",
         formato_numero(indicadores["abandonos_esperados_evitados"]),
         weighted_text,
     )
     st.caption(
-        "¹ Σ(probabilidad × Balance), expresado en las unidades originales no "
-        "declaradas de Balance. No equivale a margen ni a dinero recuperado."
+        "¹ Σ(probabilidad × Balance), en las unidades originales no declaradas "
+        "de Balance; no equivale a dinero perdido. ² Proyección basada en "
+        "efectividades académicas, no en campañas observadas."
     )

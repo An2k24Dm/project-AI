@@ -15,18 +15,11 @@ def _limpiar_resultado_anterior() -> None:
     st.session_state.pop("buscador_resultado_id", None)
 
 
-def _mostrar_informacion_general(cliente: pd.Series) -> None:
+def _mostrar_identificacion(cliente: pd.Series) -> None:
     surname = (
         "No disponible" if pd.isna(cliente["Surname"]) else str(cliente["Surname"])
     )
-    perfiles = [
-        alternativa["perfil_requerido"]
-        for alternativa in cliente["alternativas"]
-        if alternativa["elegible_comercial"]
-    ]
-    perfil_comercial = ", ".join(perfiles) or "Sin perfil elegible"
-
-    st.subheader("Información general")
+    st.subheader("A. Identificación y perfil bancario")
     general = st.columns(4)
     general[0].metric("Cliente", int(cliente["CustomerId"]))
     general[1].metric("Apellido", surname)
@@ -40,24 +33,12 @@ def _mostrar_informacion_general(cliente: pd.Series) -> None:
                 "Saldo",
                 "Productos",
                 "Actividad bancaria",
-                "Transacciones mensuales",
-                "Volumen mensual",
-                "Comisiones anuales",
-                "Margen neto anual",
-                "Rentabilidad",
-                "Perfiles comerciales elegibles",
             ],
             "Valor": [
                 f"{int(cliente['Tenure'])} años",
                 f"{cliente['Balance']:,.2f} (unidad original)",
                 str(int(cliente["NumOfProducts"])),
                 "Activo" if int(cliente["IsActiveMember"]) == 1 else "Inactivo",
-                str(int(cliente["MonthlyTransactions_Sim"])),
-                formato_usd(float(cliente["MonthlyTransactionVolume_USD_Sim"])),
-                formato_usd(float(cliente["AnnualCommissionIncome_USD_Sim"])),
-                formato_usd(float(cliente["margen_anual_usd"])),
-                str(cliente["rentabilidad"]),
-                perfil_comercial,
             ],
         }
     )
@@ -65,24 +46,67 @@ def _mostrar_informacion_general(cliente: pd.Series) -> None:
 
 
 def _mostrar_prediccion(cliente: pd.Series) -> None:
-    st.subheader("Predicción de abandono")
+    st.subheader("B. Predicción del modelo neuronal")
     probability = float(cliente["probabilidad_fuga"])
     risk, background, foreground = nivel_riesgo(probability)
     left, right = st.columns([1, 3])
-    left.metric("Probabilidad ajustada", f"{probability:.2%}")
+    left.metric("Puntaje MLP (probabilidad)", f"{probability:.2%}")
     right.markdown(
         f"<span class='risk-badge' style='background:{background};"
         f"color:{foreground}'>Riesgo descriptivo: {risk}</span>",
         unsafe_allow_html=True,
     )
     right.write(
-        "La probabilidad estima riesgo de abandono. El nivel visual no autoriza "
-        "incentivos: la decisión depende de elegibilidad, margen y GNE."
+        "Es una estimación del MLP, no una certeza de abandono ni el CreditScore. "
+        "El nivel visual no autoriza incentivos: la decisión depende de "
+        "elegibilidad, margen y GNE."
     )
+    st.progress(probability, text=f"Riesgo estimado: {probability:.2%}")
+
+
+def _mostrar_informacion_financiera(cliente: pd.Series) -> None:
+    st.subheader("C. Información financiera simulada")
+    summary = st.columns(3)
+    summary[0].metric(
+        "Ingresos por comisiones",
+        formato_usd(cliente["AnnualCommissionIncome_USD_Sim"]),
+    )
+    summary[1].metric(
+        "Costos operativos",
+        formato_usd(cliente["AnnualOperatingCosts_USD_Sim"]),
+    )
+    summary[2].metric(
+        "Margen neto anual",
+        formato_usd(cliente["margen_anual_usd"]),
+    )
+
+    information = pd.DataFrame(
+        {
+            "Indicador": [
+                "Transacciones mensuales",
+                "Volumen mensual simulado",
+                "Comisión promedio por transacción",
+                "Contribución financiera anual",
+                "Costos operativos anuales",
+                "Margen neto anual",
+                "Rentabilidad",
+            ],
+            "Valor": [
+                str(int(cliente["MonthlyTransactions_Sim"])),
+                formato_usd(cliente["MonthlyTransactionVolume_USD_Sim"]),
+                formato_usd(cliente["AvgTransactionFee_USD_Sim"]),
+                formato_usd(cliente["AnnualFinancialMargin_USD_Sim"]),
+                formato_usd(cliente["AnnualOperatingCosts_USD_Sim"]),
+                formato_usd(cliente["margen_anual_usd"]),
+                str(cliente["rentabilidad"]),
+            ],
+        }
+    )
+    st.dataframe(information, hide_index=True, width="stretch")
 
 
 def _mostrar_decision(cliente: pd.Series) -> None:
-    st.subheader("Decisión comercial")
+    st.subheader("D. Decisión comercial recomendada")
     color = {
         "Retener": GREEN,
         "No intervención": BLUE,
@@ -104,14 +128,44 @@ def _mostrar_decision(cliente: pd.Series) -> None:
     )
     st.markdown(explanation)
 
-    financial = st.columns(4)
+    financial = st.columns(3)
     financial[0].metric(
         "Margen anual",
         formato_usd(cliente["margen_anual_usd"]),
     )
     financial[1].metric("Incentivo", cliente["incentivo"] or "Ninguno")
     financial[2].metric("Costo anual", formato_usd(cliente["costo"]))
-    financial[3].metric("GNE seleccionada", formato_usd(cliente["gne"]))
+    projected = st.columns(3)
+    projected[0].metric(
+        "Efectividad supuesta",
+        f"{float(cliente['efectividad']):.0%}",
+    )
+    projected[1].metric(
+        "Beneficio bruto esperado",
+        formato_usd(cliente["beneficio_bruto_esperado_usd"]),
+    )
+    projected[2].metric("GNE seleccionada", formato_usd(cliente["gne"]))
+
+    if cliente["decision"] == "Retener":
+        st.code(
+            "GNE = ({:.4f} × {:.2f} × {:.2f}) − {:.2f} = {:.2f} USD".format(
+                float(cliente["probabilidad_fuga"]),
+                float(cliente["efectividad"]),
+                float(cliente["margen_anual_usd"]),
+                float(cliente["costo"]),
+                float(cliente["gne"]),
+            ),
+            language=None,
+        )
+    elif cliente["decision"] == "No intervención":
+        st.info(
+            "El cliente genera margen, pero no se ejecutará una campaña: "
+            "el beneficio bruto, el costo y la GNE seleccionada son cero."
+        )
+    else:
+        st.warning(
+            "El margen neto no es positivo; se bloquea cualquier gasto de retención."
+        )
 
     with st.expander("Auditar todas las alternativas evaluadas"):
         alternatives = pd.DataFrame(cliente["alternativas"])
@@ -131,11 +185,15 @@ def _mostrar_decision(cliente: pd.Series) -> None:
                 "motivo": "Motivo",
             }
         )
+        alternatives["Beneficio bruto USD"] = (
+            alternatives["GNE USD"] + alternatives["Costo anual USD"]
+        )
         visible = [
             "Incentivo",
             "Perfil",
             "Efectividad",
             "Costo anual USD",
+            "Beneficio bruto USD",
             "GNE USD",
             "Elegible comercial",
             "Elegible total",
@@ -176,7 +234,8 @@ def render_buscador(clientes: pd.DataFrame, version: str) -> None:
         st.warning(str(error))
         return
 
-    _mostrar_informacion_general(resultado)
+    _mostrar_identificacion(resultado)
     _mostrar_prediccion(resultado)
+    _mostrar_informacion_financiera(resultado)
     _mostrar_decision(resultado)
     mostrar_aviso_academico()

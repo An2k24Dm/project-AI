@@ -1,65 +1,78 @@
 # Dataset
 
-[Volver al README](../README.MD) · [Arquitectura](architecture.md) · [Aprendizaje automático](machine-learning.md) · [Modelo financiero](financial-model.md)
+[Volver al README](../README.MD) · [Resultados del EDA](eda-results.md) · [Aprendizaje automático](machine-learning.md) · [Modelo financiero](financial-model.md)
 
-## Inventario actual
+## Inventario vigente
 
-La inspección inicial del repositorio encontró:
-
-| Recurso | Estado | Observación |
-|---|---|---|
-| `data/Deep_Retention_Dataset.csv` | Disponible | 10.000 filas y 21 columnas; EDA completado. |
-| `data/incentivos.csv` | Disponible | Cuatro acciones con costos, efectividades y reglas comerciales académicas. |
-
-La ubicación vigente del dataset es `data/Deep_Retention_Dataset.csv`. La copia limpia para inferencia está en `data/processed/clientes_limpios.csv` y el catálogo vigente en `data/incentivos.csv`.
+| Recurso | Dimensiones | Propósito |
+|---|---:|---|
+| `data/Customer-Churn-Records.csv` | 10.000 × 18 | Dataset original y fuente de los notebooks 01, 02 y 04. |
+| `data/processed/clientes_limpios.csv` | 10.000 × 18 | Copia limpia generada por el notebook 02 para trazabilidad del flujo de ML. |
+| `data/processed/clientes_financieros_simulados.csv` | 10.000 × 26 | Dieciocho columnas originales más ocho simuladas; fuente principal de Streamlit. |
+| `data/processed/metadata.json` | — | Contrato de preprocesamiento, particiones, esquema y `artifact_id`. |
+| `data/incentivos.csv` | 4 filas | Catálogo académico de campañas. |
 
 ## Origen y alcance
 
-El dataset principal procede de un conjunto de abandono bancario de aproximadamente 10.000 clientes y fue complementado con variables financieras simuladas para el ejercicio académico. El repositorio actual no incluye una ficha de procedencia, licencia, fecha de extracción ni diccionario oficial del conjunto base; estos datos deberán verificarse antes de redistribuirlo o citarlo en el informe ejecutivo.
+El dataset representa 10.000 clientes bancarios. El repositorio no incluye una ficha completa de procedencia, licencia, fecha de extracción ni diccionario oficial; estos aspectos deben verificarse antes de redistribuirlo o citarlo formalmente.
 
-Los campos con sufijo `_Sim` son simulados. Sus importes no representan información bancaria real ni resultados observados de una institución.
+Una fila corresponde a un cliente y `CustomerId` es único. No existe una fecha de observación ni una dimensión temporal. `Balance` y `EstimatedSalary` parecen importes, pero su moneda y, en el segundo caso, su período no están suficientemente documentados. Por ello no se etiquetan como USD.
 
-## Estructura real
+## Dieciocho columnas originales
 
-La siguiente tabla describe las 21 columnas observadas en el encabezado. Las unidades no declaradas se mantienen como tales para evitar suposiciones.
+| Columna | Tipo observado | Significado y uso |
+|---|---|---|
+| `RowNumber` | `int64` | Número de fila; trazabilidad, no entrada del MLP. |
+| `CustomerId` | `int64` | Identificador único; búsqueda y unión, no entrada del MLP. |
+| `Surname` | texto | Apellido; presentación, no entrada del MLP. |
+| `CreditScore` | `int64` | Puntuación crediticia; predictora. |
+| `Geography` | texto | `France`, `Germany` o `Spain`; predictora nominal. |
+| `Gender` | texto | `Female` o `Male`; excluida por decisión del proyecto. |
+| `Age` | `int64` | Edad en años; predictora. |
+| `Tenure` | `int64` | Antigüedad registrada; predictora. |
+| `Balance` | `float64` | Saldo en unidad original no declarada; predictora y criterio percentil financiero. |
+| `NumOfProducts` | `int64` | Número de productos; predictora. |
+| `HasCrCard` | `int64` binaria | Posesión de tarjeta; predictora. |
+| `IsActiveMember` | `int64` binaria | Condición de cliente activo; predictora. |
+| `EstimatedSalary` | `float64` | Salario estimado con unidad/período no declarados; predictora. |
+| `Exited` | `int64` binaria | Objetivo histórico: `0` permaneció, `1` abandonó. |
+| `Complain` | `int64` binaria | Queja; excluida por riesgo de fuga de información. |
+| `Satisfaction Score` | `int64` | Puntuación 1–5; diagnóstico, no entrada inicial. |
+| `Card Type` | texto | `DIAMOND`, `GOLD`, `PLATINUM` o `SILVER`; diagnóstico. |
+| `Point Earned` | `int64` | Puntos acumulados; diagnóstico. |
 
-| Columna | Tipo conceptual | Origen | Significado | Unidad / dominio observado | Uso previsto |
-|---|---|---|---|---|---|
-| `CustomerId` | Identificador | Base | Identificador único del cliente. | Entero; 10.000 valores únicos. | Búsqueda y unión; no entrenamiento. |
-| `Surname` | Categórica | Base | Apellido del cliente. | Texto. | Presentación; no entrenamiento. |
-| `Gender` | Categórica | Base | Género consignado en el conjunto. | `Female`, `Male`. | Presentación; no entrenamiento. |
-| `Geography` | Categórica | Base | País o mercado geográfico. | `France`, `Germany`, `Spain`. | Predictora. |
-| `Age` | Numérica | Base | Edad del cliente. | Años; rango observado 18–92. | Predictora. |
-| `Tenure` | Numérica discreta | Base | Antigüedad registrada. | Años; rango observado 0–10. | Predictora. |
-| `CreditScore` | Numérica | Base | Puntuación crediticia. | Puntos; rango observado 350–850. | Predictora. |
-| `Balance` | Numérica | Base | Saldo bancario. | Unidad monetaria no declarada; rango 0–250.898,09. | Predictora y elegibilidad relativa por percentiles. |
-| `NumOfProducts` | Numérica discreta | Base | Cantidad de productos contratados. | Conteo; rango observado 1–4. | Predictora. |
-| `HasCrCard` | Binaria | Base | Indica si tiene tarjeta de crédito. | `0` = no, `1` = sí. | Predictora. |
-| `IsActiveMember` | Binaria | Base | Indica si es miembro activo. | `0` = no, `1` = sí. | Predictora. |
-| `EstimatedSalary` | Numérica | Base | Salario estimado. | Unidad monetaria y período no declarados; rango 11,58–199.992,48. | Predictora. |
-| `MonthlyTransactions_Sim` | Numérica discreta | Simulada | Cantidad mensual de transacciones. | Transacciones/mes; rango 1–44. | Cálculo/visualización financiera; no entrenamiento. |
-| `MonthlyTransactionVolume_USD_Sim` | Numérica | Simulada | Volumen transaccional mensual. | USD/mes; rango 2,55–19.395,11. | Cálculo/visualización financiera; no entrenamiento. |
-| `AvgTransactionFee_USD_Sim` | Numérica | Simulada | Comisión promedio por transacción. | USD/transacción; rango 0,18–0,56. | Cálculo financiero; no entrenamiento. |
-| `AnnualCommissionIncome_USD_Sim` | Numérica | Simulada | Ingreso anual por comisiones. | USD/año; rango 20,28–316,08. | Cálculo financiero; no entrenamiento. |
-| `AnnualFinancialMargin_USD_Sim` | Numérica | Simulada | Margen financiero anual. | USD/año; rango 0–1.353,18. | Cálculo financiero; no entrenamiento. |
-| `AnnualOperatingCosts_USD_Sim` | Numérica | Simulada | Costos operativos anuales. | USD/año; rango 116,99–348,52. | Cálculo financiero; no entrenamiento. |
-| `AnnualNetMargin_USD_Sim` | Numérica | Simulada | Margen neto anual derivado. | USD/año; rango -163,62–1.253,97. | Margen del motor financiero; no entrenamiento. |
-| `ProfitabilitySegment_Sim` | Categórica | Simulada | Segmento comercial de rentabilidad. | `Rentable`, `No rentable`. | Información/elegibilidad; no entrenamiento. |
-| `Exited` | Binaria | Base | Resultado histórico de abandono. | `0` = permaneció, `1` = abandonó. | Objetivo; nunca entrada ni predicción mostrada. |
+## Calidad y objetivo
 
-### Distinciones financieras obligatorias
+La verificación directa del CSV original y el notebook 01 muestran:
 
-- **Saldo bancario:** `Balance`; no equivale al margen ni al capital recuperable por sí solo.
-- **Cantidad de transacciones:** `MonthlyTransactions_Sim`.
-- **Volumen transaccional:** `MonthlyTransactionVolume_USD_Sim`; es un importe agregado, no un conteo.
-- **Ingresos por comisiones:** `AnnualCommissionIncome_USD_Sim`.
-- **Margen financiero:** `AnnualFinancialMargin_USD_Sim`.
-- **Costos operativos:** `AnnualOperatingCosts_USD_Sim`.
-- **Margen neto:** `AnnualNetMargin_USD_Sim`; es el valor previsto para evaluar rentabilidad, sujeto a validación de su fórmula de generación.
+| Control | Resultado |
+|---|---:|
+| Filas / columnas | 10.000 / 18 |
+| Celdas faltantes | 0 |
+| Filas duplicadas | 0 |
+| `CustomerId` únicos / duplicados | 10.000 / 0 |
+| Apellidos con `?` | 92 |
+| `Exited = 0` | 7.962 (79,62 %) |
+| `Exited = 1` | 2.038 (20,38 %) |
+| Coincidencia `Complain = Exited` | 9.986 (99,86 %) |
 
-## Características del modelo
+La coincidencia casi determinista entre `Complain` y `Exited` podría reflejar una variable registrada después o como consecuencia del abandono. Para evitar métricas artificialmente altas, `Complain` no entra al MLP.
 
-La matriz predictora utilizará exclusivamente:
+## Dataset limpio
+
+El notebook 02 carga el CSV original y trabaja sobre una copia:
+
+- elimina espacios exteriores en columnas de texto;
+- sustituye por `pd.NA` el apellido completo de los 92 registros que contienen `?`;
+- no reconstruye nombres, no elimina clientes y no altera identificadores;
+- conserva 10.000 filas y produce 92 faltantes solo en `Surname`;
+- mantiene las nueve predictoras completas, por lo que no requiere imputación.
+
+`clientes_limpios.csv` conserva las 18 columnas originales. Las particiones `.npz` contienen las matrices transformadas, etiquetas, índices originales, `CustomerId` y el identificador común de artefacto.
+
+## Características del MLP
+
+Las nueve características originales autorizadas son:
 
 1. `CreditScore`
 2. `Geography`
@@ -71,45 +84,42 @@ La matriz predictora utilizará exclusivamente:
 8. `IsActiveMember`
 9. `EstimatedSalary`
 
-La variable objetivo es `Exited`.
+Quedan fuera `RowNumber`, `CustomerId`, `Surname`, `Gender`, `Exited`, `Complain`, `Satisfaction Score`, `Card Type`, `Point Earned` y las variables financieras simuladas. `Exited` se usa solo como etiqueta durante desarrollo y evaluación.
 
-Quedan excluidas de las entradas:
+## Ocho variables financieras simuladas
 
-- `CustomerId`, porque es un identificador;
-- `Surname` y `Gender`, por decisión explícita del proyecto;
-- todas las variables con sufijo `_Sim`, porque pertenecen al análisis financiero posterior;
-- `Exited`, para impedir fuga directa de la respuesta histórica.
+El notebook 04 conserva las 18 columnas originales sin cambios y añade:
 
-## Perfil de calidad observado
+| Columna | Descripción | Unidad simulada |
+|---|---|---|
+| `MonthlyTransactions_Sim` | Transacciones mensuales estimadas. | transacciones/mes |
+| `MonthlyTransactionVolume_USD_Sim` | Volumen mensual estimado. | USD simulados/mes |
+| `AvgTransactionFee_USD_Sim` | Comisión promedio. | USD simulados/transacción |
+| `AnnualCommissionIncome_USD_Sim` | Ingreso anual por comisiones. | USD simulados/año |
+| `AnnualFinancialMargin_USD_Sim` | Contribución financiera anual. | USD simulados/año |
+| `AnnualOperatingCosts_USD_Sim` | Costos operativos anuales. | USD simulados/año |
+| `AnnualNetMargin_USD_Sim` | Comisiones + contribución − costos. | USD simulados/año |
+| `ProfitabilitySegment_Sim` | `Rentable` si el margen es positivo; en otro caso `Deficitario`. | categoría |
 
-La inspección estructural inicial produjo estos resultados reproducibles sobre el archivo actual:
+Las reglas son deterministas y reproducibles. Se basan en productos, actividad, antigüedad y segmentos percentiles de `Balance`; no usan `Exited` ni `Complain`. No representan ingresos ni costos observados de una entidad real.
 
-| Comprobación | Resultado |
-|---|---|
-| Filas | 10.000 |
-| Columnas | 21 |
-| Celdas vacías por columna | 0 en las 21 columnas |
-| Filas completas duplicadas | 0 |
-| `CustomerId` duplicados | 0 |
-| `Exited = 0` | 7.963 (79,63 %) |
-| `Exited = 1` | 2.037 (20,37 %) |
-| Segmento `Rentable` | 6.398 |
-| Segmento `No rentable` | 3.602 |
+### Distinciones financieras
 
-El EDA reproducible confirmó estos controles y amplió el análisis de tipos, consistencia, distribuciones, valores atípicos y asociaciones. Véanse los [resultados del EDA](eda-results.md). El desbalance observado en `Exited` justifica evaluar ponderación de clases y métricas distintas de la exactitud.
+- **Saldo:** `Balance`, en unidad original no declarada.
+- **Margen neto:** `AnnualNetMargin_USD_Sim`, simulado en USD/año.
+- **Beneficio bruto esperado:** suma de `P_f × E_i × M_c` solo para intervenciones recomendadas.
+- **Ganancia Neta Esperada (GNE):** beneficio bruto esperado menos costo del incentivo.
+
+El saldo no equivale al margen ni al beneficio recuperable. En la aplicación, el saldo expuesto conserva sus unidades originales.
 
 ## Catálogo de incentivos
 
-`data/incentivos.csv` contiene `incentivo_id`, nombre, costo anual en USD, efectividad, margen neto anual mínimo, perfil requerido y cuatro posibles requisitos percentiles. Los percentiles vinculan cada acción con `MonthlyTransactions_Sim`, `AnnualCommissionIncome_USD_Sim`, `Balance` o `MonthlyTransactionVolume_USD_Sim`.
-
-Los costos, efectividades, márgenes mínimos y umbrales son supuestos académicos. `validar_catalogo()` comprueba esquema, faltantes, duplicados, dominios, importes y perfiles antes de cualquier decisión. El catálogo no se presenta como política real de una entidad bancaria.
+`data/incentivos.csv` contiene cuatro incentivos, sus costos, efectividades hipotéticas, márgenes mínimos y requisitos percentiles sobre transacciones, comisiones, saldo y volumen. Estos parámetros son supuestos académicos y no proceden de campañas reales ni del entrenamiento del MLP.
 
 ## Limitaciones
 
-- La fuente primaria y la licencia no están documentadas en el repositorio.
-- Las unidades monetarias de `Balance` y `EstimatedSalary` no están declaradas.
-- Las variables simuladas son adecuadas para experimentación académica, no para afirmar impacto bancario real.
-- El objetivo histórico puede reflejar sesgos o condiciones del conjunto de origen no descritas.
-- La cobertura geográfica se limita a tres categorías observadas; categorías nuevas exigirán una política explícita en el codificador.
-- Una fila representa un cliente, pero no hay fecha de observación ni dimensión temporal para estudiar cambios o deriva.
-- El segmento simulado no reemplaza la decisión financiera: la recomendación final depende de elegibilidad, margen, costo, efectividad y GNE.
+- La licencia y procedencia primaria requieren verificación.
+- Las unidades de `Balance` y `EstimatedSalary` no están documentadas.
+- No existe información temporal para estudiar deriva o causalidad.
+- El objetivo y las variables observadas pueden reflejar sesgos del conjunto de origen.
+- Las ocho variables financieras y los incentivos son adecuados para experimentación académica, no para afirmar rentabilidad bancaria real.
