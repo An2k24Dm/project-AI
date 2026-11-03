@@ -1,0 +1,70 @@
+{
+  "preprocessing_schema_version": "2.0",
+  "artifact_id": "9d8ff84b7ef5921f",
+  "source": {
+    "filename": "Customer-Churn-Records.csv",
+    "sha256": "2abdc051d9170540777bf35652ccb02a6ce9c9645892b078762cb729039e44d2",
+    "records": 10000,
+    "columns": 18
+  },
+  "features": [
+    "CreditScore",
+    "Geography",
+    "Age",
+    "Tenure",
+    "Balance",
+    "NumOfProducts",
+    "HasCrCard",
+    "IsActiveMember",
+    "EstimatedSalary"
+  ],
+  "excluded_for_leakage": [
+    "Complain"
+  ],
+  "transformed_features": [
+    "CreditScore",
+    "Age",
+    "Tenure",
+    "Balance",
+    "NumOfProducts",
+    "EstimatedSalary",
+    "Geography_France",
+    "Geography_Germany",
+    "Geography_Spain",
+    "HasCrCard",
+    "IsActiveMember"
+  ],
+  "split": {
+    "random_state": 42,
+    "train": 0.7,
+    "validation": 0.15,
+    "test": 0.15
+  },
+  "datasets": {
+    "train": {
+      "file": "train.npz",
+      "X_shape": [
+        7000,
+        11
+      ]
+    },
+    "validation": {
+      "file": "validation.npz",
+      "X_shape": [
+        1500,
+        11
+      ]
+    },
+    "test": {
+      "file": "test.npz",
+      "X_shape": [
+        1500,
+        11
+      ]
+    }
+  },
+  "scikit_learn_version": "1.9.1",
+  "preprocessor_file": "preprocesador.joblib",
+  "clean_dataset_file": "clientes_limpios.csv",
+  "unknown_surnames": 92
+}
