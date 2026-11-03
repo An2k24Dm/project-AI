@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pandas as pd
 import pytest
 
 from src.prediction import FEATURES, PredictorFuga
+from src.constants import CLIENTS_PATH, MODELS_DIR
 
 
 @pytest.fixture(scope="module")
 def clients() -> pd.DataFrame:
-    return pd.read_csv("data/processed/clientes_limpios.csv").head(12)
+    return pd.read_csv(CLIENTS_PATH).head(12)
 
 
 @pytest.fixture(scope="module")
@@ -18,7 +21,12 @@ def predictor() -> PredictorFuga:
 
 
 def test_artifacts_are_compatible(predictor: PredictorFuga) -> None:
-    assert predictor.artifact_id == "3a2890fbab71e9c8"
+    with (MODELS_DIR / "correccion_probabilidades.json").open(
+        encoding="utf-8"
+    ) as file:
+        correction = json.load(file)
+    assert predictor.artifact_id == correction["artifact_id"]
+    assert predictor.artifact_id == predictor.preprocesador.artifact_id_
     assert len(predictor.transformed_features) == 11
     assert predictor.modelo.input_shape[-1] == 11
     assert predictor.modelo.output_shape[-1] == 1
@@ -48,6 +56,7 @@ def test_extra_columns_are_not_used_for_inference(
 ) -> None:
     with_target = clients.copy()
     with_target["Exited"] = 1
+    with_target["Complain"] = 1
     expected = predictor.predecir_lote(clients[FEATURES])
     obtained = predictor.predecir_lote(with_target)
     np.testing.assert_allclose(obtained, expected, rtol=0, atol=0)

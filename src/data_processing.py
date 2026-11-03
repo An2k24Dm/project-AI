@@ -5,15 +5,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
+from src.constants import CATALOG_PATH, CLIENTS_PATH, FEATURES
 from src.financial import validar_catalogo
-from src.prediction import FEATURES
-
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-CLIENTS_PATH = PROJECT_ROOT / "data" / "processed" / "clientes_limpios.csv"
-CATALOG_PATH = PROJECT_ROOT / "data" / "incentivos.csv"
 
 APP_REQUIRED_COLUMNS = {
     "CustomerId",
@@ -26,7 +22,10 @@ APP_REQUIRED_COLUMNS = {
     "IsActiveMember",
     "MonthlyTransactions_Sim",
     "MonthlyTransactionVolume_USD_Sim",
+    "AvgTransactionFee_USD_Sim",
     "AnnualCommissionIncome_USD_Sim",
+    "AnnualFinancialMargin_USD_Sim",
+    "AnnualOperatingCosts_USD_Sim",
     "AnnualNetMargin_USD_Sim",
     "ProfitabilitySegment_Sim",
     *FEATURES,
@@ -38,7 +37,7 @@ class ClienteNoEncontradoError(LookupError):
 
 
 def cargar_clientes(path: str | Path = CLIENTS_PATH) -> pd.DataFrame:
-    """Carga y valida la copia limpia utilizada por la aplicación."""
+    """Carga y valida la cartera con sus variables financieras simuladas."""
 
     source = Path(path)
     if not source.is_file():
@@ -51,6 +50,46 @@ def cargar_clientes(path: str | Path = CLIENTS_PATH) -> pd.DataFrame:
         raise ValueError("El dataset de clientes está vacío.")
     if clients["CustomerId"].isna().any() or not clients["CustomerId"].is_unique:
         raise ValueError("CustomerId debe ser completo y único.")
+
+    numeric_columns = [
+        *FEATURES,
+        "MonthlyTransactions_Sim",
+        "MonthlyTransactionVolume_USD_Sim",
+        "AvgTransactionFee_USD_Sim",
+        "AnnualCommissionIncome_USD_Sim",
+        "AnnualFinancialMargin_USD_Sim",
+        "AnnualOperatingCosts_USD_Sim",
+        "AnnualNetMargin_USD_Sim",
+    ]
+    numeric_columns.remove("Geography")
+    for column in numeric_columns:
+        clients[column] = pd.to_numeric(clients[column], errors="raise")
+    numeric_values = clients[numeric_columns].to_numpy(dtype=float)
+    if not np.isfinite(numeric_values).all():
+        raise ValueError("Las variables numéricas deben ser finitas.")
+
+    nonnegative_columns = [
+        "Balance",
+        "MonthlyTransactions_Sim",
+        "MonthlyTransactionVolume_USD_Sim",
+        "AvgTransactionFee_USD_Sim",
+        "AnnualCommissionIncome_USD_Sim",
+        "AnnualFinancialMargin_USD_Sim",
+        "AnnualOperatingCosts_USD_Sim",
+    ]
+    if clients[nonnegative_columns].lt(0).any().any():
+        raise ValueError(
+            "Las variables de actividad, ingresos y costos no pueden ser negativas."
+        )
+    if not clients["ProfitabilitySegment_Sim"].isin(
+        ["Rentable", "Deficitario"]
+    ).all():
+        raise ValueError("ProfitabilitySegment_Sim contiene valores desconocidos.")
+    expected_profitability = clients["AnnualNetMargin_USD_Sim"].gt(0).map(
+        {True: "Rentable", False: "Deficitario"}
+    )
+    if not clients["ProfitabilitySegment_Sim"].equals(expected_profitability):
+        raise ValueError("La rentabilidad no coincide con el margen neto simulado.")
     return clients
 
 

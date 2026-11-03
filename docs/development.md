@@ -2,215 +2,147 @@
 
 [Volver al README](../README.MD) · [Arquitectura](architecture.md) · [Aprendizaje automático](machine-learning.md) · [Aplicación](application.md) · [Hoja de ruta](roadmap.md)
 
-## Estado
+## Entorno
 
-El entorno bloqueado incluye Python 3.11, Jupyter, Pandas, NumPy, Matplotlib, Plotly, Scikit-learn, Joblib, TensorFlow/Keras, Streamlit y Pytest. Los datos procesados, los artefactos, el motor financiero y la aplicación interactiva están implementados y cubiertos por pruebas automatizadas.
+El proyecto requiere Python `3.11.*`. `pyproject.toml` declara Jupyter, Pandas, NumPy, Matplotlib, Plotly, Scikit-learn, Joblib, TensorFlow `2.21.0`, Streamlit y Pytest. `uv.lock` fija la resolución reproducible y `requirements.txt` es una exportación para herramientas que lo requieran.
 
-## Principios
-
-1. Mantener una solución monolítica y fácil de ejecutar.
-2. Separar interfaz, preparación de datos, predicción, finanzas y analítica.
-3. Hacer explícitas las entradas, salidas, unidades y supuestos.
-4. Evitar duplicar transformaciones o fórmulas.
-5. Favorecer funciones pequeñas, deterministas y comprobables.
-6. No introducir bases de datos, contenedores, servicios ni patrones fuera del alcance.
-7. Distinguir datos reales del conjunto base, variables simuladas, predicciones y proyecciones.
-
-## Organización del código
-
-| Archivo | Contenido permitido | Contenido que debe evitarse |
-|---|---|---|
-| `app.py` | Controles y presentación de Streamlit; coordinación de casos de uso. | Entrenamiento, transformaciones manuales o fórmulas financieras duplicadas. |
-| `src/data_processing.py` | Lectura de CSV, validación de esquema, selección de columnas. | Widgets o dependencias de presentación. |
-| `src/prediction.py` | Carga de artefactos, transformación e inferencia. | Reglas de incentivos o entrenamiento. |
-| `src/financial.py` | GNE, elegibilidad, comparación y decisión. | Código de Streamlit o acceso al modelo neuronal. |
-| `src/analytics.py` | Agregaciones y datos para gráficos/KPI. | Mutación de archivos fuente. |
-| `training/train.py` | División, ajuste del preprocesador y entrenamiento. | Inicio de Streamlit. |
-| `training/evaluate.py` | Evaluación, calibración y explicabilidad. | Reglas de interfaz. |
-
-La separación es funcional, no una invitación a crear capas, interfaces o abstracciones ceremoniales.
-
-## Convenciones de Python
-
-- Seguir PEP 8 y utilizar nombres descriptivos en inglés para módulos, funciones, variables y columnas ya establecidas.
-- Escribir docstrings breves en funciones públicas cuando el contrato no resulte obvio.
-- Usar type hints en parámetros y retornos, especialmente en cálculos financieros y carga de artefactos.
-- Preferir `pathlib.Path` para construir rutas relativas a la raíz del proyecto.
-- Evitar estado global mutable.
-- Usar constantes con nombre para columnas, rutas y parámetros base; no dispersar cadenas o números mágicos.
-- Validar datos en los límites del sistema y lanzar errores específicos con contexto útil.
-- Mantener cálculos internos con precisión suficiente; redondear solo al presentar.
-- No capturar excepciones genéricas salvo en el límite de interfaz, donde deberán registrarse y convertirse en mensajes seguros.
-
-## Diseño de funciones
-
-Las funciones reutilizables deberán:
-
-- recibir dependencias y datos de forma explícita;
-- retornar resultados sin escribir archivos de manera implícita;
-- no mezclar validación, cálculo y visualización cuando puedan probarse por separado;
-- preservar los DataFrames originales o documentar con claridad cualquier copia;
-- devolver estructuras con nombres inequívocos y unidades consistentes;
-- ser deterministas dadas las mismas entradas, salvo operaciones de ML con aleatoriedad controlada.
-
-Los contratos implementados incluyen validar las nueve características, predecir individualmente y por lotes, validar el catálogo, calcular GNE, seleccionar una intervención y agregar indicadores.
-
-## Gestión de dependencias con uv
-
-Los archivos disponibles son:
-
-- `pyproject.toml`: metadatos, Python 3.11 y dependencias directas del EDA, el preprocesamiento y el entrenamiento inicial;
-- `uv.lock`: resolución exacta y reproducible;
-- `.python-version`: versión de Python elegida para el proyecto.
-
-Proceso para ampliar el entorno en fases futuras:
-
-1. comprobar matrices de compatibilidad oficiales;
-2. elegir una versión de Python soportada por TensorFlow y las demás bibliotecas;
-3. añadir solo dependencias directas necesarias;
-4. regenerar y versionar `uv.lock`;
-5. probar la instalación en un clon limpio;
-6. registrar cambios de dependencias en el historial del proyecto.
-
-No se utilizarán rangos abiertos sin justificación para dependencias sensibles al formato de los artefactos. Actualizar una dependencia que serializa o carga modelos exige volver a verificar los artefactos.
-
-Comandos disponibles:
+Desde la raíz:
 
 ```bash
 uv sync --locked
-uv run python training/train.py
-uv run python training/evaluate.py
-uv run pytest
+uv run pytest -q
 uv run streamlit run app.py
 ```
 
-El profesor solo necesitará el último comando para la demostración; entrenamiento y evaluación forman parte del mantenimiento del proyecto.
+Para regenerar `requirements.txt` desde el lock:
 
-### Orden reproducible actual
+```bash
+uv export --format requirements-txt --no-hashes --locked --output-file requirements.txt
+```
 
-1. Ejecutar `notebooks/02_preprocesamiento.ipynb` desde cero. Este notebook es el único responsable de la limpieza, la partición, el ajuste del `ColumnTransformer` y la exportación de `data/processed/` y `models/preprocesador.joblib`.
-2. Ejecutar `notebooks/03_red_neuronal.ipynb` desde cero. Debe consumir `train.npz`, `validation.npz` y `metadata.json`; no debe leer el CSV original, reconstruir el preprocesador ni cargar prueba.
-3. Ejecutar `notebooks/04_analisis_financiero.ipynb` para reproducir inferencia, elegibilidad y agregados con los artefactos ya exportados.
+`requirements.txt` no debe editarse manualmente.
 
-`notebooks/01_eda.ipynb` permanece independiente y no es un requisito de ejecución para los notebooks 2 y 3.
+## Principios
 
-## Datos y rutas
+1. Mantener una solución monolítica y reproducible.
+2. Separar presentación, coordinación, datos, predicción, finanzas y analítica.
+3. Reutilizar una sola implementación de cada transformación y fórmula.
+4. Validar esquema y dominios en los límites del sistema.
+5. Preservar identificadores y orden de filas.
+6. Distinguir datos observados, predicciones, simulaciones y proyecciones.
+7. Mantener cálculos con precisión completa y redondear solo al presentar.
+8. No persistir cambios del simulador.
 
-- Los CSV y artefactos necesarios para la demostración deberán estar dentro del repositorio si licencia y tamaño lo permiten.
-- `data/processed/` y `models/preprocesador.joblib` se regeneran juntos mediante el notebook 2 y comparten un identificador verificable.
-- Las rutas se resolverán desde la raíz, no desde el directorio de trabajo accidental del usuario.
-- La aplicación leerá datos y artefactos; las simulaciones no los modificarán.
-- El esquema esperado se validará antes de inferir.
-- Nunca se registrarán filas completas con datos personales en mensajes de error.
-- La procedencia, licencia y huella del dataset utilizado para entrenar deberán conservarse.
+## Organización del código
 
-## Pruebas con Pytest
+| Archivo | Responsabilidad | Evitar |
+|---|---|---|
+| `app.py` | Inicialización, navegación y límite de errores. | Reglas financieras o gráficos. |
+| `src/constants.py` | Rutas y características compartidas. | Cargas pesadas o estado mutable. |
+| `src/data_processing.py` | Lectura, validación, consulta y catálogos temporales. | Widgets o inferencia. |
+| `src/prediction.py` | Carga de artefactos y predicción. | Entrenamiento o reglas de incentivos. |
+| `src/financial.py` | Catálogo, percentiles, elegibilidad, GNE y decisiones. | Streamlit o acceso directo al MLP. |
+| `src/analytics.py` | Enriquecimiento, KPI, filtros y comparación. | Escritura en datos fuente. |
+| `ui/services.py` | Firma de recursos, caché y coordinación. | Duplicar fórmulas. |
+| `ui/pages/*.py` | Presentación de las tres vistas. | Entrenamiento o transformaciones. |
+| `ui/components.py` | Formatos, KPI y avisos compartidos. | Acceso a archivos. |
+| `ui/styles.py` | Colores y estilos visuales. | Lógica de negocio. |
 
-La suite implementada contiene 44 pruebas para carga de datos, predicción, compatibilidad de artefactos, entradas inválidas, catálogo, GNE, elegibilidad, desempates, agregados, filtros, simulación e inicio de Streamlit. Se ejecuta con `uv run pytest -q`.
+## Flujo reproducible de notebooks
 
-### Matriz mínima
+1. `01_eda.ipynb` diagnostica `Customer-Churn-Records.csv` sin modificarlo.
+2. `02_preprocesamiento.ipynb` limpia una copia, divide 70/15/15, ajusta el `ColumnTransformer` solo con entrenamiento y exporta datos y preprocesador.
+3. `03_red_neuronal.ipynb` carga los artefactos del notebook 02, entrena una arquitectura, decide la corrección con validación y evalúa prueba una sola vez.
+4. `04_analisis_financiero.ipynb` carga el CSV original, genera ocho variables deterministas, aplica el predictor y el motor financiero, y exporta `clientes_financieros_simulados.csv`.
+
+Ejecutar un notebook con exportación puede sobrescribir artefactos versionados. Antes de regenerarlos se debe confirmar que esa acción es intencional, conservar la trazabilidad y volver a ejecutar las verificaciones dependientes.
+
+## Datos y artefactos
+
+| Recurso | Productor | Consumidor principal |
+|---|---|---|
+| `Customer-Churn-Records.csv` | Fuente | Notebooks 01, 02 y 04. |
+| `clientes_limpios.csv` | Notebook 02 | Trazabilidad del preprocesamiento. |
+| `train.npz`, `validation.npz`, `test.npz` | Notebook 02 | Notebook 03. |
+| `metadata.json` | Notebook 02 | Notebook 03 y verificación. |
+| `preprocesador.joblib` | Notebook 02 | Notebook 03 y `PredictorFuga`. |
+| `modelo_churn.keras` | Notebook 03 | `PredictorFuga`. |
+| `correccion_probabilidades.json` | Notebook 03 | `PredictorFuga`. |
+| `clientes_financieros_simulados.csv` | Notebook 04 | Streamlit. |
+| `incentivos.csv` | Catálogo versionado | Notebook 04 y Streamlit. |
+
+El preprocesador, los NPZ, los metadatos, el modelo y la corrección deben compartir un `artifact_id` compatible. No se reemplaza un artefacto aislado sin verificar los demás.
+
+## Convenciones
+
+- Seguir PEP 8, nombres descriptivos y type hints en contratos públicos.
+- Usar `pathlib.Path` y rutas relativas a la raíz del proyecto.
+- Preferir funciones deterministas con entradas y salidas explícitas.
+- Preservar DataFrames originales o trabajar sobre copias documentadas.
+- No capturar excepciones genéricas salvo en el límite de interfaz, donde se registran y se convierten en mensajes seguros.
+- No registrar filas completas ni información personal en errores.
+- No añadir dependencias o capas arquitectónicas sin necesidad comprobada.
+
+## Pruebas
+
+La suite se ejecuta con:
+
+```bash
+uv run pytest -q
+```
+
+En la revisión documental actual, el comando completó **56 pruebas aprobadas**.
+
+### Cobertura funcional
 
 | Área | Comprobaciones |
 |---|---|
-| Lectura | El CSV se carga con el número y nombres de columnas esperados; errores claros ante ausencia o esquema inválido. |
-| Clientes | `CustomerId` identifica una sola fila; IDs ausentes o duplicados se manejan explícitamente. |
-| Características | Se seleccionan exactamente las nueve predictoras, en orden consistente. |
-| Fuga de datos | `Exited`, identificadores, `Gender`, `Surname` y columnas `_Sim` no entran al modelo. |
-| Preprocesamiento | El objeto se ajusta solo con entrenamiento y transforma de forma consistente datos individuales y lotes. |
-| Artefactos | Modelo y preprocesador exportados se cargan y son compatibles con el esquema. |
-| Predicción | Salida finita dentro de `[0, 1]`; misma fila produce resultado coherente individual y por lote. |
-| GNE | Fórmula, unidades, límites y casos de margen negativo son correctos. |
-| Incentivos | Se rechazan alternativas con `GNE <= 0` y se selecciona la mayor GNE positiva elegible. |
-| Agregados | Inversión, valor rescatable, GNE total y ROI siguen sus definiciones. |
-| Simulación | Los cambios son temporales y no alteran archivos ni DataFrames base. |
-| Aplicación | Streamlit inicia con los recursos distribuidos y muestra errores controlados cuando falta alguno. |
+| Datos | Archivos presentes, esquema financiero completo, tipos, finitud, identificadores únicos y rentabilidad coherente. |
+| Características | Selección exacta de nueve columnas; `Exited`, `Complain`, identificadores y variables financieras no entran al MLP. |
+| Artefactos | `artifact_id`, dimensión 11 y orden de características compatibles. |
+| Predicción | Probabilidades finitas en `[0, 1]` y equivalencia individual/lote. |
+| Finanzas | GNE negativa, cero y positiva; bloqueo de margen no positivo; elegibilidad; máximo y desempates. |
+| Agregados | Decisiones, inversión, beneficio bruto, GNE, ROI, saldo expuesto y efectividad. |
+| Filtros | Actúan sobre decisiones existentes y manejan subconjuntos vacíos. |
+| Simulación | Cambia resultados sin mutar catálogo, probabilidades ni CSV. |
+| Interfaz | Navegación, búsqueda, filtros, formulario y restablecimiento con `AppTest`. |
 
-### Pruebas unitarias
-
-Las pruebas se centran en validadores, selección de características, fórmulas financieras, elegibilidad, desempates y agregaciones. Utilizan datos mínimos cuando no necesitan los artefactos reales.
-
-### Pruebas de integración
-
-Las pruebas de integración cubren:
-
-- CSV → validación → preprocesador → modelo → probabilidad;
-- probabilidad + cliente + catálogo → recomendación;
-- equivalencia entre predicción individual y por lotes;
-- decisiones de una muestra de cartera → agregados coherentes;
-- carga de los artefactos reales distribuidos.
-- búsqueda individual coherente con la decisión almacenada en la cartera;
-- escenarios temporales que no mutan el catálogo original;
-- inicio de `app.py` mediante las herramientas de prueba de Streamlit.
-
-Los resultados del conjunto de prueba del modelo no deben convertirse en asserts frágiles de igualdad exacta; se validarán contratos y tolerancias justificadas.
+Las métricas finales del MLP no se usan como comparaciones exactas frágiles en cada prueba; se verifican contratos, rangos y compatibilidad. Las cifras de referencia se documentan desde las salidas guardadas de los notebooks.
 
 ## Manejo de errores
 
-Los módulos internos deberán producir excepciones con contexto técnico y la interfaz transformarlas en mensajes comprensibles. Como mínimo se distinguirán:
+Los módulos internos producen errores con contexto técnico; la interfaz muestra mensajes seguros. Se distinguen al menos:
 
 - recurso ausente o sin permisos;
-- CSV mal formado;
-- columnas faltantes, adicionales críticas o tipos inválidos;
-- identificador inexistente o duplicado;
-- categoría desconocida no soportada;
+- CSV mal formado o incompleto;
+- `CustomerId` ausente o duplicado;
+- categoría o dominio no soportado;
 - artefactos incompatibles;
-- predicción inválida;
+- predicción no finita o fuera de `[0, 1]`;
 - costo, efectividad o margen fuera de dominio;
-- división de ROI con inversión cero.
+- ROI sin inversión.
 
-No se sustituirán silenciosamente valores inválidos ni se continuará con resultados parciales como si fueran válidos.
+No se sustituyen silenciosamente valores desconocidos ni se presentan resultados parciales como válidos.
 
-## Reproducibilidad
+## Actualización del modelo
 
-Cada entrenamiento candidato deberá registrar:
+Ante nuevos datos o cambios de esquema:
 
-- commit o versión del código;
-- huella y procedencia del dataset;
-- lista de características;
-- semilla y estrategia de partición;
-- parámetros del preprocesamiento;
-- arquitectura e hiperparámetros;
-- versiones del entorno bloqueado;
-- métricas de validación y prueba;
-- decisión y método de calibración;
-- fecha y criterio de selección del modelo.
+1. conservar la versión anterior y su huella;
+2. repetir EDA y revisar fuga de información;
+3. generar particiones y ajustar un preprocesador nuevo solo con entrenamiento;
+4. entrenar y seleccionar con validación;
+5. usar prueba una vez para evaluación final;
+6. exportar juntos preprocesador, modelo y corrección;
+7. regenerar el escenario financiero solo si corresponde;
+8. ejecutar pruebas y arrancar Streamlit;
+9. actualizar metadatos y documentación.
 
-El modelo y el preprocesador forman una pareja indivisible. No se reemplazará uno sin volver a comprobar el otro.
+## Git y entrega
 
-## Versionado y actualización del modelo
-
-Procedimiento previsto:
-
-1. incorporar y validar el nuevo dataset sin sobrescribir evidencia del anterior;
-2. ejecutar el EDA y comparar cambios de esquema y distribución;
-3. decidir si la definición del objetivo o las características cambió;
-4. crear particiones reproducibles y ajustar un preprocesador nuevo solo con entrenamiento;
-5. entrenar, evaluar, calibrar si corresponde y analizar explicabilidad;
-6. comparar con el modelo vigente mediante criterios registrados;
-7. exportar juntos el nuevo `.keras` y `.joblib`;
-8. ejecutar todas las pruebas e iniciar Streamlit con los nuevos artefactos;
-9. actualizar documentación, métricas y metadatos;
-10. reemplazar la versión distribuida solo después de aprobar los criterios.
-
-Si el tamaño de los artefactos excede los límites de GitHub, se deberá definir un mecanismo de distribución reproducible antes de la entrega; la aplicación no debe depender de una descarga improvisada al iniciar.
-
-## Buenas prácticas de Git
-
-- Crear cambios pequeños y coherentes por fase.
-- Usar ramas con nombres descriptivos y commits que expliquen la intención.
-- No versionar cachés, entornos virtuales, secretos, resultados temporales ni datos sin permiso de distribución.
-- Revisar `git status` y el diff antes de cada commit.
-- No mezclar cambios de documentación, datos y modelo sin una razón trazable.
-- No reescribir artefactos grandes innecesariamente.
-- Integrar cambios solo cuando pruebas y documentación estén actualizadas.
-- Mantener `main` utilizable y seguir el flujo de ramas acordado por el equipo.
-
-## Ejecución de la aplicación
-
-Una entrega válida deberá funcionar desde un clon limpio con `uv` instalado:
-
-```bash
-uv run streamlit run app.py
-```
-
-La verificación de entrega comprobará que no sea necesario entrenar, descargar datos manualmente, configurar variables de entorno, instalar una base de datos ni ejecutar otros comandos para abrir la demostración.
+- Mantener cambios pequeños y coherentes.
+- Revisar `git status`, `git diff --check` y el alcance antes de cada commit.
+- No versionar entornos, cachés, secretos ni archivos temporales.
+- No reescribir artefactos grandes sin una razón trazable.
+- Confirmar licencia y tamaño antes de redistribuir dataset y modelo.
+- Una entrega válida debe abrir con `uv run streamlit run app.py` sin reentrenamiento, base de datos ni descargas manuales de datos.

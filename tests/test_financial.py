@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from src.constants import CLIENTS_PATH
 from src.financial import (
     CATALOG_PERCENTILE_RULES,
     calcular_gne,
@@ -19,7 +20,7 @@ from src.financial import (
 
 @pytest.fixture(scope="module")
 def portfolio() -> pd.DataFrame:
-    return pd.read_csv("data/processed/clientes_limpios.csv")
+    return pd.read_csv(CLIENTS_PATH)
 
 
 @pytest.fixture(scope="module")

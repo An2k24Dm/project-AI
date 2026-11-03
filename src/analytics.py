@@ -18,6 +18,13 @@ CLIENT_CONTEXT_COLUMNS = [
     "Tenure",
     "NumOfProducts",
     "IsActiveMember",
+    "MonthlyTransactions_Sim",
+    "MonthlyTransactionVolume_USD_Sim",
+    "AvgTransactionFee_USD_Sim",
+    "AnnualCommissionIncome_USD_Sim",
+    "AnnualFinancialMargin_USD_Sim",
+    "AnnualOperatingCosts_USD_Sim",
+    "AnnualNetMargin_USD_Sim",
     "ProfitabilitySegment_Sim",
 ]
 
@@ -50,6 +57,11 @@ def enriquecer_resultados(
         enriched["margen_anual_usd"].gt(0), "Rentable", "Deficitario"
     )
     enriched["incentivo_mostrado"] = enriched["incentivo"].fillna("Sin incentivo")
+    enriched["beneficio_bruto_esperado_usd"] = np.where(
+        enriched["decision"].eq("Retener"),
+        enriched["gne"] + enriched["costo"],
+        0.0,
+    )
     return enriched
 
 
@@ -59,11 +71,14 @@ def calcular_indicadores(cartera: pd.DataFrame) -> dict[str, float | int | None]
     if cartera.empty:
         return {
             "clientes_analizados": 0,
+            "clientes_rentables": 0,
+            "clientes_deficitarios": 0,
             "clientes_retener": 0,
             "clientes_no_intervencion": 0,
             "clientes_salida_permitida": 0,
             "inversion_total_usd": 0.0,
             "valor_rescatable_estimado_usd": 0.0,
+            "beneficio_bruto_esperado_usd": 0.0,
             "gne_total_usd": 0.0,
             "roi_proyectado_pct": None,
             "saldo_expuesto_unidades_originales": 0.0,
@@ -71,7 +86,15 @@ def calcular_indicadores(cartera: pd.DataFrame) -> dict[str, float | int | None]
             "efectividad_ponderada_riesgo": None,
         }
 
-    required = {"probabilidad_fuga", "Balance", "efectividad", "decision"}
+    required = {
+        "probabilidad_fuga",
+        "Balance",
+        "efectividad",
+        "decision",
+        "margen_anual_usd",
+        "costo",
+        "gne",
+    }
     missing = sorted(required - set(cartera.columns))
     if missing:
         raise ValueError(f"Faltan columnas para los indicadores: {missing}")
@@ -87,9 +110,16 @@ def calcular_indicadores(cartera: pd.DataFrame) -> dict[str, float | int | None]
     retained_effectiveness = cartera.loc[retained, "efectividad"].to_numpy(dtype=float)
     avoided = float(np.sum(retained_risk * retained_effectiveness))
     risk_sum = float(np.sum(retained_risk))
+    profitable = cartera["margen_anual_usd"].gt(0)
+    gross_benefit = float(
+        (cartera.loc[retained, "gne"] + cartera.loc[retained, "costo"]).sum()
+    )
 
     return {
         **indicators,
+        "clientes_rentables": int(profitable.sum()),
+        "clientes_deficitarios": int((~profitable).sum()),
+        "beneficio_bruto_esperado_usd": gross_benefit,
         "saldo_expuesto_unidades_originales": float(np.sum(probability * balance)),
         "abandonos_esperados_evitados": avoided,
         "efectividad_ponderada_riesgo": avoided / risk_sum if risk_sum > 0 else None,
@@ -131,7 +161,7 @@ def comparar_escenarios(
     keys = [
         "clientes_retener",
         "inversion_total_usd",
-        "valor_rescatable_estimado_usd",
+        "beneficio_bruto_esperado_usd",
         "gne_total_usd",
         "roi_proyectado_pct",
         "abandonos_esperados_evitados",

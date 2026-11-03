@@ -10,32 +10,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-MODELS_DIR = PROJECT_ROOT / "models"
-
-FEATURES = [
-    "CreditScore",
-    "Geography",
-    "Age",
-    "Tenure",
-    "Balance",
-    "NumOfProducts",
-    "HasCrCard",
-    "IsActiveMember",
-    "EstimatedSalary",
-]
-
-NUMERIC_FEATURES = [
-    "CreditScore",
-    "Age",
-    "Tenure",
-    "Balance",
-    "NumOfProducts",
-    "HasCrCard",
-    "IsActiveMember",
-    "EstimatedSalary",
-]
+from src.constants import FEATURES, MODELS_DIR, NUMERIC_FEATURES
 
 
 class PredictorFuga:
