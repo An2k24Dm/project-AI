@@ -175,6 +175,6 @@ La suite Pytest cubre carga y validación de datos, compatibilidad de artefactos
 - [Desarrollo y pruebas](docs/development.md)
 - [Hoja de ruta](docs/roadmap.md)
 
-## Pendiente de entrega
+## Informe del proyecto
 
-La solución técnica está integrada. Continúan pendientes el informe ejecutivo final en PDF y la preparación de la presentación académica. Cuando Overleaf entregue la versión definitiva, el PDF deberá incorporarse al repositorio y enlazarse aquí; actualmente no existe un archivo ni un enlace final que pueda publicarse.
+https://drive.google.com/file/d/1ALPAchp5pVnDXvuvEgVub4CosOrl2qT1/view?usp=sharing
