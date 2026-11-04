@@ -56,7 +56,7 @@ def _capturar_parametros(catalogo: pd.DataFrame) -> ParametrosEscenario:
             )
             left, right = st.columns(2)
             cost = left.number_input(
-                "Costo anual USD",
+                "Costo anual (USD)",
                 min_value=0.0,
                 step=5.0,
                 key=f"sim_cost_{incentive_id}",
@@ -126,11 +126,11 @@ def _mostrar_comparacion_financiera(
     comparison = pd.DataFrame(
         {
             "Escenario": ["Base", "Simulado"],
-            "Inversión total": [
+            "Inversión total (USD)": [
                 base_indicators["inversion_total_usd"],
                 simulated_indicators["inversion_total_usd"],
             ],
-            "GNE total": [
+            "GNE total (USD)": [
                 base_indicators["gne_total_usd"],
                 simulated_indicators["gne_total_usd"],
             ],
@@ -140,7 +140,7 @@ def _mostrar_comparacion_financiera(
     investment = px.bar(
         comparison,
         x="Escenario",
-        y="Inversión total",
+        y="Inversión total (USD)",
         color="Escenario",
         title="Inversión total: base y simulada",
         color_discrete_map={"Base": GRAY, "Simulado": GREEN},
@@ -149,7 +149,7 @@ def _mostrar_comparacion_financiera(
     gne = px.bar(
         comparison,
         x="Escenario",
-        y="GNE total",
+        y="GNE total (USD)",
         color="Escenario",
         title="GNE total: base y simulada",
         color_discrete_map={"Base": GRAY, "Simulado": GREEN},
