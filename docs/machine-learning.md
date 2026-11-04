@@ -127,6 +127,26 @@ La transformación es monótona: conserva ROC-AUC y PR-AUC, y fue seleccionada p
 
 Con umbral diagnóstico `0,5`, validación obtuvo precisión `0,732673`, recall `0,483660` y F1 `0,582677`. Ese umbral solo sirve para la matriz de confusión y métricas descriptivas; no autoriza incentivos.
 
+## Interpretabilidad mediante importancia por permutación
+
+El notebook 03 evalúa el MLP realmente entrenado mediante importancia por permutación. Las 1.500 filas originales de validación se recuperan en el orden de los `customer_ids` guardados en `validation.npz`; antes del cálculo se comprueba la coincidencia de identificadores, etiquetas, `artifact_id` y matriz transformada. El conjunto de prueba no participa.
+
+Cada una de las nueve variables originales se permuta por separado cinco veces con semillas fijas. `Geography` se trata como una única característica categórica. La importancia es la disminución media del ROC-AUC ajustado frente al valor de referencia de **0,854542**:
+
+| Variable | Importancia media | Desviación estándar |
+|---|---:|---:|
+| `NumOfProducts` | 0,144935 | 0,006642 |
+| `Age` | 0,098243 | 0,010874 |
+| `IsActiveMember` | 0,032636 | 0,008111 |
+| `Balance` | 0,027758 | 0,003775 |
+| `Geography` | 0,020826 | 0,003795 |
+| `CreditScore` | 0,001710 | 0,001782 |
+| `HasCrCard` | 0,001007 | 0,000374 |
+| `EstimatedSalary` | -0,000910 | 0,003360 |
+| `Tenure` | -0,005239 | 0,002992 |
+
+Los tres factores con mayor importancia positiva son `NumOfProducts`, `Age` e `IsActiveMember`. Las importancias negativas o cercanas a cero reflejan variabilidad de esta medición sobre validación y no justifican eliminar características. Esta técnica describe la sensibilidad predictiva del MLP; no sustituye las correlaciones de Pearson del EDA ni demuestra causalidad.
+
 ## Evaluación final en prueba
 
 | Métrica | Resultado |
@@ -162,5 +182,5 @@ Limitaciones principales:
 - datos históricos sin dimensión temporal ni prueba causal;
 - tres geografías observadas;
 - corrección probabilística analítica dependiente del dataset;
-- falta de evaluación formal por subgrupos y de explicabilidad consolidada;
+- falta de evaluación formal por subgrupos y necesidad de confirmar la estabilidad de la importancia por permutación ante datos nuevos;
 - necesidad de reevaluar el modelo ante cambios de datos, esquema o dependencias.

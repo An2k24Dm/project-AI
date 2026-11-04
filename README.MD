@@ -63,7 +63,7 @@ Para garantizar la consistencia monetaria del análisis, se adopta el dólar est
 
 1. [`01_eda.ipynb`](notebooks/01_eda.ipynb): inspecciona calidad, desbalance, distribuciones, valores atípicos, variables adicionales y correlaciones; no modifica datos.
 2. [`02_preprocesamiento.ipynb`](notebooks/02_preprocesamiento.ipynb): limpia una copia, conserva los 10.000 clientes, divide 70/15/15 de forma estratificada y ajusta el preprocesador solo con entrenamiento.
-3. [`03_red_neuronal.ipynb`](notebooks/03_red_neuronal.ipynb): entrena y evalúa el MLP, decide la corrección probabilística con validación y usa prueba una sola vez al final.
+3. [`03_red_neuronal.ipynb`](notebooks/03_red_neuronal.ipynb): entrena y evalúa el MLP, decide la corrección probabilística con validación, usa prueba una sola vez al final y calcula importancia por permutación sin reentrenar.
 4. [`04_analisis_financiero.ipynb`](notebooks/04_analisis_financiero.ipynb): genera de forma determinista ocho variables financieras, integra probabilidades y evalúa los incentivos y la GNE.
 
 ## Preprocesamiento y modelo neuronal
@@ -85,6 +85,10 @@ Resultados finales guardados en prueba:
 | F1@0.5 | 0,606426 |
 
 La corrección posterior al entrenamiento revierte analíticamente el cambio de prior inducido por los pesos de clase. Mejoró Brier Score y Log Loss en validación, pero no es una calibración aprendida ni perfecta. El umbral `0,5` solo se usa para diagnósticos de clasificación; no decide incentivos. Detalles en [Aprendizaje automático](docs/machine-learning.md).
+
+### Interpretabilidad del MLP
+
+La importancia por permutación se calcula exclusivamente sobre validación, repitiendo cinco veces la alteración de cada una de las nueve variables originales. Con un ROC-AUC de referencia de 0,854542, los tres factores con mayor importancia positiva son `NumOfProducts` (0,144935), `Age` (0,098243) e `IsActiveMember` (0,032636). El análisis explica sensibilidad predictiva del modelo, no causalidad, y es distinto de las correlaciones de Pearson del EDA.
 
 ## Modelo financiero simulado
 
@@ -173,4 +177,4 @@ La suite Pytest cubre carga y validación de datos, compatibilidad de artefactos
 
 ## Pendiente de entrega
 
-La solución técnica está integrada. Continúan pendientes el informe ejecutivo final y la preparación de la presentación académica; no forman parte de esta actualización documental.
+La solución técnica está integrada. Continúan pendientes el informe ejecutivo final en PDF y la preparación de la presentación académica. Cuando Overleaf entregue la versión definitiva, el PDF deberá incorporarse al repositorio y enlazarse aquí; actualmente no existe un archivo ni un enlace final que pueda publicarse.
