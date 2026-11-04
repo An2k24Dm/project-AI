@@ -8,7 +8,7 @@ import streamlit as st
 
 
 def formato_usd(value: float | int | None) -> str:
-    """Formatea un importe simulado o informa que no aplica."""
+    """Formatea un importe en USD o informa que no aplica."""
 
     return "No aplicable" if value is None else f"USD {value:,.2f}"
 
@@ -67,23 +67,23 @@ def mostrar_kpis(indicadores: Mapping[str, float | int | None]) -> None:
 
     third = st.columns(2)
     third[0].metric(
-        "Inversión",
+        "Inversión (USD)",
         formato_usd(indicadores["inversion_total_usd"]),
     )
     third[1].metric(
-        "Beneficio bruto esperado",
+        "Beneficio bruto esperado (USD)",
         formato_usd(indicadores["beneficio_bruto_esperado_usd"]),
     )
 
     fourth = st.columns(2)
-    fourth[0].metric("GNE total", formato_usd(indicadores["gne_total_usd"]))
+    fourth[0].metric("GNE total (USD)", formato_usd(indicadores["gne_total_usd"]))
     roi = indicadores["roi_proyectado_pct"]
     fourth[1].metric("ROI proyectado", "N/A" if roi is None else f"{roi:.2f} %")
 
     fifth = st.columns(2)
     fifth[0].metric(
-        "Saldo expuesto¹",
-        formato_numero(indicadores["saldo_expuesto_unidades_originales"]),
+        "Saldo en riesgo (USD)",
+        formato_usd(indicadores["saldo_expuesto_usd"]),
     )
     weighted = indicadores["efectividad_ponderada_riesgo"]
     weighted_text = "N/A" if weighted is None else f"{weighted:.1%} ponderada"
@@ -93,7 +93,7 @@ def mostrar_kpis(indicadores: Mapping[str, float | int | None]) -> None:
         weighted_text,
     )
     st.caption(
-        "¹ Σ(probabilidad × Balance), en las unidades originales no declaradas "
-        "de Balance; no equivale a dinero perdido. ² Proyección basada en "
+        "El saldo en riesgo es Σ(probabilidad × Balance): exposición patrimonial "
+        "ponderada, no ganancia recuperable. ² Proyección basada en "
         "efectividades académicas, no en campañas observadas."
     )

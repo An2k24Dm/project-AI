@@ -102,7 +102,7 @@ En la revisión documental actual, el comando completó **56 pruebas aprobadas**
 | Artefactos | `artifact_id`, dimensión 11 y orden de características compatibles. |
 | Predicción | Probabilidades finitas en `[0, 1]` y equivalencia individual/lote. |
 | Finanzas | GNE negativa, cero y positiva; bloqueo de margen no positivo; elegibilidad; máximo y desempates. |
-| Agregados | Decisiones, inversión, beneficio bruto, GNE, ROI, saldo expuesto y efectividad. |
+| Agregados | Decisiones, inversión, beneficio bruto, GNE, ROI, saldo en riesgo (USD) y efectividad. |
 | Filtros | Actúan sobre decisiones existentes y manejan subconjuntos vacíos. |
 | Simulación | Cambia resultados sin mutar catálogo, probabilidades ni CSV. |
 | Interfaz | Navegación, búsqueda, filtros, formulario y restablecimiento con `AppTest`. |

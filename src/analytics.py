@@ -81,7 +81,7 @@ def calcular_indicadores(cartera: pd.DataFrame) -> dict[str, float | int | None]
             "beneficio_bruto_esperado_usd": 0.0,
             "gne_total_usd": 0.0,
             "roi_proyectado_pct": None,
-            "saldo_expuesto_unidades_originales": 0.0,
+            "saldo_expuesto_usd": 0.0,
             "abandonos_esperados_evitados": 0.0,
             "efectividad_ponderada_riesgo": None,
         }
@@ -120,7 +120,7 @@ def calcular_indicadores(cartera: pd.DataFrame) -> dict[str, float | int | None]
         "clientes_rentables": int(profitable.sum()),
         "clientes_deficitarios": int((~profitable).sum()),
         "beneficio_bruto_esperado_usd": gross_benefit,
-        "saldo_expuesto_unidades_originales": float(np.sum(probability * balance)),
+        "saldo_expuesto_usd": float(np.sum(probability * balance)),
         "abandonos_esperados_evitados": avoided,
         "efectividad_ponderada_riesgo": avoided / risk_sum if risk_sum > 0 else None,
     }
