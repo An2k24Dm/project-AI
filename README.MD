@@ -55,7 +55,9 @@ Los tres archivos de clientes cumplen funciones distintas:
 | `data/processed/clientes_limpios.csv` | Copia limpia de 10.000 filas generada por el notebook 02. |
 | `data/processed/clientes_financieros_simulados.csv` | Fuente de Streamlit: 18 columnas originales y ocho financieras simuladas. |
 
-`Balance` y `EstimatedSalary` no tienen una moneda suficientemente documentada en la fuente. En particular, el saldo expuesto se presenta en unidades originales, no como USD. Véase [Dataset](docs/dataset.md).
+### Convención monetaria
+
+Para garantizar la consistencia monetaria del análisis, se adopta el dólar estadounidense (USD) como moneda de referencia del proyecto. Los saldos bancarios (`Balance`) y los ingresos estimados (`EstimatedSalary`) del dataset original se interpretan en USD como supuesto académico, ya que la fuente no documenta expresamente su moneda. No se aplican conversiones cambiarias y los valores numéricos permanecen inalterados. Los ingresos, costos, márgenes e incentivos financieros se expresan igualmente en USD. Véase [Dataset](docs/dataset.md).
 
 ## Flujo de los notebooks
 
@@ -92,7 +94,7 @@ El dataset original no contiene transacciones, comisiones, costos operativos ni 
 \text{Margen neto}=\text{Ingresos por comisiones}+\text{Contribución financiera}-\text{Costos operativos}
 \]
 
-Estos valores son supuestos académicos reproducibles, no datos contables observados. El saldo original solo interviene mediante percentiles; no se convierte directamente en ganancias.
+Estos valores son supuestos académicos reproducibles, no datos contables observados. El saldo, interpretado en USD sin alterar su valor, solo interviene mediante percentiles; no se convierte directamente en ganancias.
 
 ## Catálogo y decisiones
 
@@ -128,6 +130,8 @@ Los costos, efectividades y reglas de elegibilidad son supuestos del ejercicio, 
 | Beneficio bruto esperado | USD 77.780,78 |
 | Ganancia Neta Esperada total | USD 42.180,78 |
 | ROI proyectado | 118,49 % |
+
+Como indicadores patrimoniales complementarios del notebook 04, 804 clientes cumplen el umbral exploratorio de riesgo crítico (`P_f ≥ 0,65`), con un saldo de USD 68.285.654,02; los 793 clientes seleccionados para retención reúnen un saldo de USD 108.030.424,28. Estos saldos describen exposición patrimonial y no representan beneficio recuperable.
 
 Se recomiendan 350 exoneraciones de comisiones, 335 bonificaciones transaccionales, 102 tasas preferenciales y 6 gestores personalizados. Todas las cifras son proyecciones del escenario simulado, no beneficios realizados.
 

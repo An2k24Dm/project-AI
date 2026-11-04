@@ -30,13 +30,13 @@ def _mostrar_identificacion(cliente: pd.Series) -> None:
         {
             "Dato": [
                 "Antigüedad",
-                "Saldo",
+                "Saldo (USD)",
                 "Productos",
                 "Actividad bancaria",
             ],
             "Valor": [
                 f"{int(cliente['Tenure'])} años",
-                f"{cliente['Balance']:,.2f} (unidad original)",
+                formato_usd(cliente["Balance"]),
                 str(int(cliente["NumOfProducts"])),
                 "Activo" if int(cliente["IsActiveMember"]) == 1 else "Inactivo",
             ],
@@ -68,15 +68,15 @@ def _mostrar_informacion_financiera(cliente: pd.Series) -> None:
     st.subheader("C. Información financiera simulada")
     summary = st.columns(3)
     summary[0].metric(
-        "Ingresos por comisiones",
+        "Ingresos anuales por comisiones (USD)",
         formato_usd(cliente["AnnualCommissionIncome_USD_Sim"]),
     )
     summary[1].metric(
-        "Costos operativos",
+        "Costos operativos anuales (USD)",
         formato_usd(cliente["AnnualOperatingCosts_USD_Sim"]),
     )
     summary[2].metric(
-        "Margen neto anual",
+        "Margen neto anual (USD)",
         formato_usd(cliente["margen_anual_usd"]),
     )
 
@@ -84,11 +84,11 @@ def _mostrar_informacion_financiera(cliente: pd.Series) -> None:
         {
             "Indicador": [
                 "Transacciones mensuales",
-                "Volumen mensual simulado",
-                "Comisión promedio por transacción",
-                "Contribución financiera anual",
-                "Costos operativos anuales",
-                "Margen neto anual",
+                "Volumen transaccional mensual (USD)",
+                "Comisión promedio por transacción (USD)",
+                "Contribución financiera anual (USD)",
+                "Costos operativos anuales (USD)",
+                "Margen neto anual (USD)",
                 "Rentabilidad",
             ],
             "Valor": [
@@ -130,21 +130,21 @@ def _mostrar_decision(cliente: pd.Series) -> None:
 
     financial = st.columns(3)
     financial[0].metric(
-        "Margen anual",
+        "Margen anual (USD)",
         formato_usd(cliente["margen_anual_usd"]),
     )
     financial[1].metric("Incentivo", cliente["incentivo"] or "Ninguno")
-    financial[2].metric("Costo anual", formato_usd(cliente["costo"]))
+    financial[2].metric("Costo anual (USD)", formato_usd(cliente["costo"]))
     projected = st.columns(3)
     projected[0].metric(
         "Efectividad supuesta",
         f"{float(cliente['efectividad']):.0%}",
     )
     projected[1].metric(
-        "Beneficio bruto esperado",
+        "Beneficio bruto esperado (USD)",
         formato_usd(cliente["beneficio_bruto_esperado_usd"]),
     )
-    projected[2].metric("GNE seleccionada", formato_usd(cliente["gne"]))
+    projected[2].metric("GNE seleccionada (USD)", formato_usd(cliente["gne"]))
 
     if cliente["decision"] == "Retener":
         st.code(
@@ -177,24 +177,24 @@ def _mostrar_decision(cliente: pd.Series) -> None:
                 "incentivo": "Incentivo",
                 "perfil_requerido": "Perfil",
                 "efectividad": "Efectividad",
-                "costo_anual_usd": "Costo anual USD",
-                "gne": "GNE USD",
+                "costo_anual_usd": "Costo anual (USD)",
+                "gne": "GNE (USD)",
                 "elegible_comercial": "Elegible comercial",
                 "elegible": "Elegible total",
                 "gne_positiva": "GNE positiva",
                 "motivo": "Motivo",
             }
         )
-        alternatives["Beneficio bruto USD"] = (
-            alternatives["GNE USD"] + alternatives["Costo anual USD"]
+        alternatives["Beneficio bruto (USD)"] = (
+            alternatives["GNE (USD)"] + alternatives["Costo anual (USD)"]
         )
         visible = [
             "Incentivo",
             "Perfil",
             "Efectividad",
-            "Costo anual USD",
-            "Beneficio bruto USD",
-            "GNE USD",
+            "Costo anual (USD)",
+            "Beneficio bruto (USD)",
+            "GNE (USD)",
             "Elegible comercial",
             "Elegible total",
             "GNE positiva",

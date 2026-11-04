@@ -16,7 +16,11 @@
 
 El dataset representa 10.000 clientes bancarios. El repositorio no incluye una ficha completa de procedencia, licencia, fecha de extracción ni diccionario oficial; estos aspectos deben verificarse antes de redistribuirlo o citarlo formalmente.
 
-Una fila corresponde a un cliente y `CustomerId` es único. No existe una fecha de observación ni una dimensión temporal. `Balance` y `EstimatedSalary` parecen importes, pero su moneda y, en el segundo caso, su período no están suficientemente documentados. Por ello no se etiquetan como USD.
+Una fila corresponde a un cliente y `CustomerId` es único. No existe una fecha de observación ni una dimensión temporal.
+
+## Convención monetaria
+
+Para garantizar la consistencia monetaria del análisis, se adopta el dólar estadounidense (USD) como moneda de referencia del proyecto. Los saldos bancarios (`Balance`) y los ingresos estimados (`EstimatedSalary`) del dataset original se interpretan en USD como supuesto académico, ya que la fuente no documenta expresamente su moneda. No se aplican conversiones cambiarias y los valores numéricos permanecen inalterados. Los ingresos, costos, márgenes e incentivos financieros se expresan igualmente en USD. El período al que corresponde `EstimatedSalary` tampoco está documentado.
 
 ## Dieciocho columnas originales
 
@@ -30,11 +34,11 @@ Una fila corresponde a un cliente y `CustomerId` es único. No existe una fecha 
 | `Gender` | texto | `Female` o `Male`; excluida por decisión del proyecto. |
 | `Age` | `int64` | Edad en años; predictora. |
 | `Tenure` | `int64` | Antigüedad registrada; predictora. |
-| `Balance` | `float64` | Saldo en unidad original no declarada; predictora y criterio percentil financiero. |
+| `Balance` | `float64` | Saldo interpretado en USD sin conversión; predictora y criterio percentil financiero. |
 | `NumOfProducts` | `int64` | Número de productos; predictora. |
 | `HasCrCard` | `int64` binaria | Posesión de tarjeta; predictora. |
 | `IsActiveMember` | `int64` binaria | Condición de cliente activo; predictora. |
-| `EstimatedSalary` | `float64` | Salario estimado con unidad/período no declarados; predictora. |
+| `EstimatedSalary` | `float64` | Salario estimado interpretado en USD, con período no documentado; predictora. |
 | `Exited` | `int64` binaria | Objetivo histórico: `0` permaneció, `1` abandonó. |
 | `Complain` | `int64` binaria | Queja; excluida por riesgo de fuga de información. |
 | `Satisfaction Score` | `int64` | Puntuación 1–5; diagnóstico, no entrada inicial. |
@@ -93,24 +97,24 @@ El notebook 04 conserva las 18 columnas originales sin cambios y añade:
 | Columna | Descripción | Unidad simulada |
 |---|---|---|
 | `MonthlyTransactions_Sim` | Transacciones mensuales estimadas. | transacciones/mes |
-| `MonthlyTransactionVolume_USD_Sim` | Volumen mensual estimado. | USD simulados/mes |
-| `AvgTransactionFee_USD_Sim` | Comisión promedio. | USD simulados/transacción |
-| `AnnualCommissionIncome_USD_Sim` | Ingreso anual por comisiones. | USD simulados/año |
-| `AnnualFinancialMargin_USD_Sim` | Contribución financiera anual. | USD simulados/año |
-| `AnnualOperatingCosts_USD_Sim` | Costos operativos anuales. | USD simulados/año |
-| `AnnualNetMargin_USD_Sim` | Comisiones + contribución − costos. | USD simulados/año |
+| `MonthlyTransactionVolume_USD_Sim` | Volumen mensual estimado. | USD/mes |
+| `AvgTransactionFee_USD_Sim` | Comisión promedio. | USD/transacción |
+| `AnnualCommissionIncome_USD_Sim` | Ingreso anual por comisiones. | USD/año |
+| `AnnualFinancialMargin_USD_Sim` | Contribución financiera anual. | USD/año |
+| `AnnualOperatingCosts_USD_Sim` | Costos operativos anuales. | USD/año |
+| `AnnualNetMargin_USD_Sim` | Comisiones + contribución − costos. | USD/año |
 | `ProfitabilitySegment_Sim` | `Rentable` si el margen es positivo; en otro caso `Deficitario`. | categoría |
 
 Las reglas son deterministas y reproducibles. Se basan en productos, actividad, antigüedad y segmentos percentiles de `Balance`; no usan `Exited` ni `Complain`. No representan ingresos ni costos observados de una entidad real.
 
 ### Distinciones financieras
 
-- **Saldo:** `Balance`, en unidad original no declarada.
-- **Margen neto:** `AnnualNetMargin_USD_Sim`, simulado en USD/año.
+- **Saldo:** `Balance`, interpretado en USD por convención académica y sin conversión cambiaria.
+- **Margen neto:** `AnnualNetMargin_USD_Sim`, supuesto académico expresado en USD/año.
 - **Beneficio bruto esperado:** suma de `P_f × E_i × M_c` solo para intervenciones recomendadas.
 - **Ganancia Neta Esperada (GNE):** beneficio bruto esperado menos costo del incentivo.
 
-El saldo no equivale al margen ni al beneficio recuperable. En la aplicación, el saldo expuesto conserva sus unidades originales.
+El saldo no equivale al margen ni al beneficio recuperable. En la aplicación, el saldo en riesgo se muestra en USD y corresponde a una exposición patrimonial ponderada por la probabilidad de fuga.
 
 ## Catálogo de incentivos
 
@@ -119,7 +123,7 @@ El saldo no equivale al margen ni al beneficio recuperable. En la aplicación, e
 ## Limitaciones
 
 - La licencia y procedencia primaria requieren verificación.
-- Las unidades de `Balance` y `EstimatedSalary` no están documentadas.
+- La fuente no documenta formalmente la moneda de `Balance` y `EstimatedSalary`; su interpretación en USD es una convención académica, no una conversión validada contra la fuente.
 - No existe información temporal para estudiar deriva o causalidad.
 - El objetivo y las variables observadas pueden reflejar sesgos del conjunto de origen.
 - Las ocho variables financieras y los incentivos son adecuados para experimentación académica, no para afirmar rentabilidad bancaria real.

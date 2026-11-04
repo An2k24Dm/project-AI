@@ -125,6 +125,7 @@ def _mostrar_graficos_economia(cartera: pd.DataFrame) -> None:
         y="inversion_usd",
         color="incentivo",
         title="Inversión proyectada por incentivo",
+        labels={"inversion_usd": "Inversión proyectada (USD)"},
     )
     left.plotly_chart(investment, width="stretch")
     gne = px.bar(
@@ -133,6 +134,7 @@ def _mostrar_graficos_economia(cartera: pd.DataFrame) -> None:
         y="gne_usd",
         color="incentivo",
         title="GNE agregada por incentivo",
+        labels={"gne_usd": "GNE agregada (USD)"},
     )
     right.plotly_chart(gne, width="stretch")
     margin = px.box(
@@ -171,14 +173,14 @@ def _mostrar_tabla_oportunidades(cartera: pd.DataFrame) -> None:
                 format="%.2f",
             ),
             "margen_anual_usd": st.column_config.NumberColumn(
-                "Margen neto USD",
+                "Margen neto (USD)",
                 format="%.2f",
             ),
             "rentabilidad": "Rentabilidad",
             "decision": "Decisión",
             "incentivo_mostrado": "Incentivo",
-            "costo": st.column_config.NumberColumn("Costo USD", format="%.2f"),
-            "gne": st.column_config.NumberColumn("GNE USD", format="%.2f"),
+            "costo": st.column_config.NumberColumn("Costo (USD)", format="%.2f"),
+            "gne": st.column_config.NumberColumn("GNE (USD)", format="%.2f"),
         },
     )
 

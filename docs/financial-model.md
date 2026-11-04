@@ -8,6 +8,8 @@ El dataset original no contiene transacciones, comisiones, costos operativos ni 
 
 Las variables con sufijo `_Sim`, los costos, las efectividades y los márgenes mínimos son supuestos del ejercicio. No representan datos contables, eficacia causal ni resultados de campañas reales.
 
+El proyecto adopta USD como moneda de referencia. `Balance` y `EstimatedSalary` se interpretan en USD por convención académica, sin aplicar conversiones ni alterar sus valores numéricos. Las variables financieras simuladas, los costos y los incentivos también se expresan en USD.
+
 ## Generación de variables financieras
 
 El notebook parte de las 18 columnas de `data/Customer-Churn-Records.csv`, trabaja sobre una copia y agrega exactamente ocho columnas:
@@ -26,15 +28,15 @@ El notebook parte de las 18 columnas de `data/Customer-Churn-Records.csv`, traba
 | Componente | Regla determinista |
 |---|---|
 | Transacciones mensuales | `6 + 4×NumOfProducts + 8×IsActiveMember + floor(Tenure/2)` |
-| Importe medio hipotético | `65 + 15×NumOfProducts + 20×IsActiveMember` USD simulados |
+| Importe medio hipotético | `65 + 15×NumOfProducts + 20×IsActiveMember` USD |
 | Volumen mensual | Transacciones mensuales × importe medio hipotético |
-| Comisión promedio | `0,45 + 0,10×NumOfProducts` USD simulados |
+| Comisión promedio | `0,45 + 0,10×NumOfProducts` USD |
 | Ingreso anual por comisiones | Transacciones × comisión promedio × 12 |
 | Contribución por saldo | USD 0, 120, 240, 420 o 700 según saldo cero o cuartil de saldos positivos |
 | Contribución financiera anual | Segmento de saldo + `70×NumOfProducts + 60×IsActiveMember` |
 | Costos operativos anuales | `90 + 25×NumOfProducts + 0,80×Transacciones×12` |
 
-Los cuartiles de `Balance` se calculan solo entre saldos positivos: 100.181,975; 119.839,690 y 139.512,290 en la unidad original no declarada.
+Los cuartiles de `Balance` se calculan solo entre saldos positivos: USD 100.181,975; USD 119.839,690 y USD 139.512,290.
 
 Las magnitudes se eligieron para ilustrar de forma sencilla cómo productos, actividad, antigüedad, transacciones y servicio afectan la rentabilidad; no se ajustaron para alcanzar una cantidad predeterminada de clientes rentables o campañas. No se usa aleatoriedad: con los mismos datos y parámetros, el resultado es idéntico.
 
@@ -50,7 +52,7 @@ La identidad implementada es:
 
 `ProfitabilitySegment_Sim` toma el valor `Rentable` cuando `AnnualNetMargin_USD_Sim > 0` y `Deficitario` en caso contrario. El escenario actual contiene 7.880 clientes rentables y 2.120 deficitarios.
 
-`Balance` no se multiplica por una tasa para convertirlo directamente en beneficio. Solo determina un segmento relativo por percentiles y también participa en reglas comerciales del catálogo. Su moneda no está documentada.
+`Balance` no se multiplica por una tasa para convertirlo directamente en beneficio. Solo determina un segmento relativo por percentiles y también participa en reglas comerciales del catálogo. Su lectura en USD es la convención académica del proyecto.
 
 ## Integración con el MLP
 
@@ -95,8 +97,8 @@ Los cortes calculados sobre la cartera completa son:
 |---|---:|---:|
 | `MonthlyTransactions_Sim` | p50 | 18 transacciones/mes |
 | `AnnualCommissionIncome_USD_Sim` | p50 | USD 132,00/año |
-| `Balance` | p75 | 127.644,24 unidades originales |
-| `Balance` | p90 | 149.244,792 unidades originales |
+| `Balance` | p75 | USD 127.644,24 |
+| `Balance` | p90 | USD 149.244,792 |
 | `MonthlyTransactionVolume_USD_Sim` | p50 | USD 1.805,00/mes |
 | `MonthlyTransactionVolume_USD_Sim` | p75 | USD 2.530,00/mes |
 
@@ -150,6 +152,18 @@ Distribución de las 793 recomendaciones:
 
 Ningún cliente con margen no positivo recibe un incentivo y toda retención recomendada tiene GNE positiva y cumple las reglas comerciales.
 
+### Indicadores patrimoniales complementarios
+
+El notebook 04 conserva dos cálculos adicionales para el informe, sin convertirlos en nuevos KPI del panel:
+
+| Indicador | Resultado |
+|---|---:|
+| Clientes con riesgo crítico (`P_f ≥ 0,65`) | 804 |
+| Saldo de clientes con riesgo crítico | USD 68.285.654,02 |
+| Saldo de clientes seleccionados para retención | USD 108.030.424,28 |
+
+Estos valores son saldos patrimoniales agregados. No equivalen a pérdida esperada, ingreso bancario ni ganancia recuperable.
+
 ## Agregados del panel
 
 Para las intervenciones seleccionadas `S`:
@@ -174,11 +188,11 @@ Si la inversión es cero, el ROI es no aplicable.
 
 El panel también calcula:
 
-- **Saldo expuesto:** `Σ(P_f × Balance)` para la cartera mostrada, en unidades originales no declaradas.
+- **Saldo en riesgo:** `Σ(P_f × Balance)` para la cartera mostrada, expresado en USD como exposición patrimonial ponderada.
 - **Abandonos esperados evitados:** `Σ(P_f × E_i)` entre clientes retenidos.
 - **Efectividad ponderada por riesgo:** el indicador anterior dividido entre `ΣP_f` de los clientes retenidos, si el denominador es positivo.
 
-Estos valores dependen de probabilidades y efectividades estimadas; no son dinero perdido, abandonos observados ni evidencia causal.
+El saldo en riesgo no es una ganancia recuperable por el banco. Estos valores dependen de probabilidades y efectividades estimadas; no son dinero perdido, abandonos observados ni evidencia causal.
 
 ## Reproducibilidad y simulación
 

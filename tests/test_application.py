@@ -58,7 +58,7 @@ def test_existing_and_missing_client_queries(app_state) -> None:
 
 
 def test_base_dashboard_matches_verified_financial_results(app_state) -> None:
-    indicators = app_state[5]
+    clients, _, probabilities, _, _, indicators, _ = app_state
     assert indicators["clientes_analizados"] == 10_000
     assert indicators["clientes_rentables"] == 7_880
     assert indicators["clientes_deficitarios"] == 2_120
@@ -71,7 +71,10 @@ def test_base_dashboard_matches_verified_financial_results(app_state) -> None:
         indicators["beneficio_bruto_esperado_usd"],
         indicators["inversion_total_usd"] + indicators["gne_total_usd"],
     )
-    assert indicators["saldo_expuesto_unidades_originales"] > 0
+    expected_exposure = float(
+        np.sum(probabilities * clients["Balance"].to_numpy())
+    )
+    assert indicators["saldo_expuesto_usd"] == pytest.approx(expected_exposure)
     assert indicators["abandonos_esperados_evitados"] > 0
     assert 0 <= indicators["efectividad_ponderada_riesgo"] <= 1
 
@@ -292,9 +295,9 @@ def test_streamlit_application_interactions() -> None:
     metric_labels = {metric.label for metric in app.metric}
     assert {
         "Puntaje MLP (probabilidad)",
-        "Costo anual",
-        "Beneficio bruto esperado",
-        "GNE seleccionada",
+        "Costo anual (USD)",
+        "Beneficio bruto esperado (USD)",
+        "GNE seleccionada (USD)",
     } <= metric_labels
 
     app.text_input[0].set_value("identificador-inválido")

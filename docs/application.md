@@ -44,7 +44,7 @@ La consulta por `CustomerId` está organizada en cuatro bloques.
 
 ### A. Identificación y perfil bancario
 
-Muestra identificador, apellido, edad, país, antigüedad, saldo, productos y condición de cliente activo. `Balance` conserva su unidad original no declarada.
+Muestra identificador, apellido, edad, país, antigüedad, saldo, productos y condición de cliente activo. `Balance` se presenta en USD según la convención monetaria académica del proyecto, sin conversión de su valor original.
 
 Una entrada no numérica o un identificador inexistente produce un aviso comprensible y no una recomendación parcial.
 
@@ -92,10 +92,10 @@ El panel muestra:
 8. beneficio bruto esperado;
 9. Ganancia Neta Esperada total;
 10. ROI proyectado;
-11. saldo expuesto;
+11. saldo en riesgo (USD);
 12. abandonos esperados evitados y efectividad ponderada por riesgo.
 
-El saldo expuesto es `Σ(P_f × Balance)` y se presenta en unidades originales, nunca como USD. No equivale a dinero perdido ni a beneficio recuperable. Los indicadores de efectividad dependen de probabilidades y efectividades hipotéticas, no de campañas observadas.
+El saldo en riesgo es `Σ(P_f × Balance)` y se presenta en USD. Representa exposición patrimonial ponderada por la probabilidad de fuga; no equivale a dinero perdido, ganancia recuperable ni beneficio bancario. Los indicadores de efectividad dependen de probabilidades y efectividades hipotéticas, no de campañas observadas.
 
 ### Filtros
 
